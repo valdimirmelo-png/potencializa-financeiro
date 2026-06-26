@@ -899,7 +899,7 @@ function getContractStatus(c){
 }
 
 function render(){
-  const todosClientes=lsObj('ag_clientes').filter(c=>c.encerrado!==true);
+  const todosClientes=lsObj('ag_clientes').filter(c=>!c.encerrado);
   const custos=lsObj('ag_custos');
   const aportes=lsObj('ag_aportes');
   const pagamentos=lsObj('ag_pagamentos');
@@ -960,8 +960,7 @@ function renderAlertas(clientes,pagamentos){
 
 function renderClientes(clientes,pagamentos){
   const el=document.getElementById('clients-list');
-  // Busca direto do localStorage, sem filtro de data, sem lógica financeira
-  const todos=lsObj('ag_clientes').filter(c=>c.encerrado!==true);
+  const todos=lsObj('ag_clientes').filter(c=>!c.encerrado);
   if(!todos.length){
     el.innerHTML='<div class="empty">Nenhum cliente cadastrado<br><small>Toque + para adicionar</small></div>';
     return;
@@ -995,7 +994,7 @@ function renderPagamentosPeriodo(pagamentos){
   const el=document.getElementById('pag-periodo-list');
   if(!el) return;
   const clientes=lsObj('ag_clientes');
-  const todos=clientes.filter(c=>c.encerrado!==true);
+  const todos=clientes.filter(c=>!c.encerrado);
   const hoje=new Date();
   const html=todos.map(c=>{
     const pago=pagamentos.filter(p=>p.clienteId===c.id&&inRange(p.data));
@@ -1021,7 +1020,7 @@ function renderPagamentosPeriodo(pagamentos){
 }
 
 function renderConcentracao(clientes){
-  const todosAtivos=lsObj('ag_clientes').filter(c=>c.encerrado!==true);
+  const todosAtivos=lsObj('ag_clientes').filter(c=>!c.encerrado);
   const card=document.getElementById('card-concentracao');
   if(!todosAtivos.length){card.style.display='none';return}
   card.style.display='block';
