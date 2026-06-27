@@ -141,23 +141,51 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
 
 <!-- PAINEL -->
 <div class="page active" id="pg-painel">
-  <div class="kpi-grid">
-    <div class="kpi"><div class="kpi-lbl">MRR Contratado</div><div class="kpi-val" id="kpi-mrr-c">R$ 0</div><div class="kpi-sub" id="kpi-mrr-c-sub">0 clientes</div></div>
-    <div class="kpi">
-      <div class="kpi-lbl">MRR Recebido</div><div class="kpi-val" id="kpi-mrr-r">R$ 0</div>
-      <div class="mrr-bar-bg"><div class="mrr-bar-fill" id="mrr-bar" style="width:0%"></div></div>
-      <div class="mrr-labels"><span id="mrr-pct">0%</span><span>do contratado</span></div>
-    </div>
-    <div class="kpi"><div class="kpi-lbl">Custos do Período</div><div class="kpi-val" style="color:var(--red)" id="kpi-gasto">R$ 0</div></div>
-    <div class="kpi"><div class="kpi-lbl">Saldo de Caixa</div><div class="kpi-val" style="color:var(--green)" id="kpi-saldo">R$ 0</div><div class="kpi-sub">disponível agora</div></div>
-    <div class="kpi"><div class="kpi-lbl">Receita Pontual</div><div class="kpi-val" style="color:var(--blue)" id="kpi-pontual">R$ 0</div><div class="kpi-sub">entradas no período</div></div>
-    <div class="kpi"><div class="kpi-lbl">Faturamento Total</div><div class="kpi-val" style="color:var(--green)" id="kpi-fat-total">R$ 0</div><div class="kpi-sub">MRR + pontual</div></div>
-    <div class="kpi kpi-full" style="display:flex;justify-content:space-between;align-items:center">
-      <div><div class="kpi-lbl">Reserva da Empresa</div><div class="kpi-val" style="color:var(--blue)" id="kpi-reserva">R$ 0</div></div>
-      <div style="text-align:center"><div class="kpi-lbl">Clientes Ativos</div><div class="kpi-val" id="kpi-ativos">0</div></div>
-      <div style="text-align:right"><div class="kpi-lbl">Ticket Médio</div><div class="kpi-val" id="kpi-ticket">R$ 0</div></div>
+
+  <!-- Bloco 1: Faturamento -->
+  <div class="card" style="margin-bottom:10px">
+    <div class="sec-title">Faturamento</div>
+    <div class="kpi-grid" style="margin-bottom:0">
+      <div class="kpi">
+        <div class="kpi-lbl">MRR Recebido</div>
+        <div class="kpi-val" id="kpi-mrr-r">R$ 0</div>
+        <div class="kpi-sub"><span id="mrr-pct">0%</span> do contratado (<span id="kpi-mrr-c">R$ 0</span>)</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-lbl">Receita Pontual</div>
+        <div class="kpi-val" style="color:var(--blue)" id="kpi-pontual">R$ 0</div>
+        <div class="kpi-sub">entradas no período</div>
+      </div>
+      <div class="kpi kpi-full">
+        <div class="kpi-lbl">Faturamento Total</div>
+        <div class="kpi-val" style="color:var(--green)" id="kpi-fat-total">R$ 0</div>
+        <div class="kpi-sub" id="kpi-mrr-c-sub">0 recorrentes</div>
+      </div>
     </div>
   </div>
+
+  <!-- Bloco 2: Resultado -->
+  <div class="kpi-grid" style="margin-bottom:10px">
+    <div class="kpi">
+      <div class="kpi-lbl">Custos do Período</div>
+      <div class="kpi-val" style="color:var(--red)" id="kpi-gasto">R$ 0</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Saldo de Caixa</div>
+      <div class="kpi-val" style="color:var(--green)" id="kpi-saldo">R$ 0</div>
+      <div class="kpi-sub">disponível agora</div>
+    </div>
+  </div>
+
+  <!-- Bloco 3: Base -->
+  <div class="card" style="margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><div class="kpi-lbl">Clientes Ativos</div><div class="kpi-val" id="kpi-ativos">0</div></div>
+      <div style="text-align:center"><div class="kpi-lbl">Ticket Médio</div><div class="kpi-val" id="kpi-ticket">R$ 0</div></div>
+      <div style="text-align:right"><div class="kpi-lbl">Reserva da Empresa</div><div class="kpi-val" style="color:var(--blue)" id="kpi-reserva">R$ 0</div></div>
+    </div>
+  </div>
+
   <div id="alertas-wrap"></div>
   <div class="card">
     <div class="sec-title">Despesas por categoria <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted)">(toque para detalhar)</span></div>
@@ -1081,7 +1109,6 @@ function render(){
   document.getElementById('kpi-mrr-c').textContent=fmt(mrrC);
   document.getElementById('kpi-mrr-c-sub').textContent=todosClientes.filter(c=>(c.tipo||'recorrente')==='recorrente').length+' recorrentes';
   document.getElementById('kpi-mrr-r').textContent=fmt(mrrR);
-  document.getElementById('mrr-bar').style.width=pct+'%';
   document.getElementById('mrr-pct').textContent=pct+'%';
   document.getElementById('kpi-gasto').textContent=fmt(custosTotais);
   document.getElementById('kpi-ticket').textContent=fmt(ticket);
