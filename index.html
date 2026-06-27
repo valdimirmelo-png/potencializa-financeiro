@@ -427,6 +427,7 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
       </select>
     </div>
   </div>
+  <div class="field"><label>Dia de vencimento (todo mês)</label><input id="cu-dia" type="number" placeholder="5" min="1" max="31"></div>
   <div id="parcelas-field" style="display:none" class="field">
     <label>Número de parcelas</label>
     <input id="cu-parcelas" type="number" placeholder="12" min="2">
@@ -847,7 +848,7 @@ window.deleteCliente=function(){
 window.abrirNovoCusto=function(){
   document.getElementById('modal-custo-title').textContent='Novo custo';
   document.getElementById('cu-id').value='';
-  ['cu-desc','cu-valor','cu-parcelas'].forEach(id=>document.getElementById(id).value='');
+  ['cu-desc','cu-valor','cu-parcelas','cu-dia'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('cu-tipo').value='fixo';document.getElementById('cu-natureza').value='fixo';
   document.getElementById('parcelas-field').style.display='none';
   document.getElementById('btn-del-custo').style.display='none';
@@ -860,6 +861,7 @@ window.editarCusto=function(id){
   document.getElementById('cu-valor').value=c.valor;document.getElementById('cu-tipo').value=c.tipo;
   document.getElementById('cu-natureza').value=c.natureza||'fixo';
   document.getElementById('cu-parcelas').value=c.parcelas||'';
+  document.getElementById('cu-dia').value=c.dia||'';
   document.getElementById('parcelas-field').style.display=c.tipo==='parcelado'?'block':'none';
   document.getElementById('btn-del-custo').style.display='block';
   buildCatSelect('cu-cat',c.cat);openModal('modal-custo');
@@ -871,12 +873,13 @@ window.saveCusto=function(){
   const tipo=document.getElementById('cu-tipo').value;
   const natureza=document.getElementById('cu-natureza').value;
   const np=parseInt(document.getElementById('cu-parcelas').value)||1;
+  const dia=parseInt(document.getElementById('cu-dia').value)||5;
   const id=document.getElementById('cu-id').value;
   if(!desc||!valorTotal){alert('Preencha descrição e valor');return}
   const valorP=tipo==='parcelado'?Math.round(valorTotal/np*100)/100:valorTotal;
   const custos=lsObj('ag_custos');
-  if(id){const idx=custos.findIndex(x=>x.id===id);if(idx>=0) custos[idx]={...custos[idx],desc,valor:valorP,valorTotal,cat,tipo,natureza,parcelas:np};}
-  else custos.push({id:Date.now().toString(),desc,valor:valorP,valorTotal,cat,tipo,natureza,parcelas:np,inicio:new Date().toISOString().split('T')[0]});
+  if(id){const idx=custos.findIndex(x=>x.id===id);if(idx>=0) custos[idx]={...custos[idx],desc,valor:valorP,valorTotal,cat,tipo,natureza,parcelas:np,dia};}
+  else custos.push({id:Date.now().toString(),desc,valor:valorP,valorTotal,cat,tipo,natureza,parcelas:np,dia,inicio:new Date().toISOString().split('T')[0]});
   lsSave('ag_custos',custos);closeModal('modal-custo');render();
 };
 window.deleteCusto=function(){
@@ -1029,7 +1032,12 @@ function render(){
   const pagamentos=lsObj('ag_pagamentos');
 
   const mrrC=todosClientes.reduce((s,c)=>s+c.valor,0);
-  const mrrR=pagamentos.filter(p=>inRange(p.data)).reduce((s,p)=>s+p.valor,0);
+  const{de,ate}=getFiltroRange();
+  const mrrR=pagamentos.filter(p=>{
+    if(p.mes===undefined||p.ano===undefined) return inRange(p.data);
+    const d=new Date(p.ano,p.mes,1);
+    return d>=new Date(de.getFullYear(),de.getMonth(),1)&&d<=new Date(ate.getFullYear(),ate.getMonth(),1);
+  }).reduce((s,p)=>s+p.valor,0);
   const pct=mrrC>0?Math.min(Math.round(mrrR/mrrC*100),100):0;
   const custosTotais=custos.filter(c=>c.tipo!=='avulso').reduce((s,c)=>s+c.valor,0);
   const totalAportes=aportes.reduce((s,a)=>s+a.valor,0);
@@ -1182,8 +1190,16 @@ function renderPagamentosPeriodo(pagamentos){
   const clientes=lsObj('ag_clientes');
   const todos=clientes.filter(c=>!c.encerrado);
   const hoje=new Date();
+  const{de,ate}=getFiltroRange();
   const html=todos.map(c=>{
-    const pago=pagamentos.filter(p=>p.clienteId===c.id&&inRange(p.data));
+    const pago=pagamentos.filter(p=>{
+      if(p.clienteId!==c.id) return false;
+      if(p.mes!==undefined&&p.ano!==undefined){
+        const d=new Date(p.ano,p.mes,1);
+        return d>=new Date(de.getFullYear(),de.getMonth(),1)&&d<=new Date(ate.getFullYear(),ate.getMonth(),1);
+      }
+      return inRange(p.data);
+    });
     const temPagamento=pago.length>0;
     const venceu=hoje>new Date(hoje.getFullYear(),hoje.getMonth(),c.vencimento);
     const status=temPagamento?'pago':venceu?'atrasado':'pendente';
@@ -1238,7 +1254,15 @@ function renderFluxo(pagamentos,aportes,custos){
     itens.push({tipo:'in',subtipo:'aporte',id:a.id,desc:'Aporte'+(a.desc?' — '+a.desc:''),data:a.data,valor:a.valor});
   });
   custos.filter(c=>c.tipo!=='avulso').forEach(c=>{
-    itens.push({tipo:'out',subtipo:'custo',id:c.id,desc:c.desc+(c.tipo==='parcelado'?' (parcela)':''),data:filtroDE||new Date().toISOString().split('T')[0],valor:c.valor});
+    const{de,ate}=getFiltroRange();
+    // Gera uma entrada por mês dentro do período filtrado
+    let cur=new Date(de.getFullYear(),de.getMonth(),1);
+    while(cur<=ate){
+      const dia=c.dia||5;
+      const dataStr=cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(dia).padStart(2,'0');
+      itens.push({tipo:'out',subtipo:'custo',id:c.id,desc:c.desc+(c.tipo==='parcelado'?' (parcela)':''),data:dataStr,valor:c.valor});
+      cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);
+    }
   });
   itens.sort((a,b)=>new Date(b.data)-new Date(a.data));
   if(!itens.length){el.innerHTML='<div class="empty">Nenhuma movimentação no período</div>';return}
