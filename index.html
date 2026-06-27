@@ -150,6 +150,8 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
     </div>
     <div class="kpi"><div class="kpi-lbl">Custos do Período</div><div class="kpi-val" style="color:var(--red)" id="kpi-gasto">R$ 0</div></div>
     <div class="kpi"><div class="kpi-lbl">Saldo de Caixa</div><div class="kpi-val" style="color:var(--green)" id="kpi-saldo">R$ 0</div><div class="kpi-sub">disponível agora</div></div>
+    <div class="kpi"><div class="kpi-lbl">Receita Pontual</div><div class="kpi-val" style="color:var(--blue)" id="kpi-pontual">R$ 0</div><div class="kpi-sub">entradas no período</div></div>
+    <div class="kpi"><div class="kpi-lbl">Faturamento Total</div><div class="kpi-val" style="color:var(--green)" id="kpi-fat-total">R$ 0</div><div class="kpi-sub">MRR + pontual</div></div>
     <div class="kpi kpi-full" style="display:flex;justify-content:space-between;align-items:center">
       <div><div class="kpi-lbl">Reserva da Empresa</div><div class="kpi-val" style="color:var(--blue)" id="kpi-reserva">R$ 0</div></div>
       <div style="text-align:center"><div class="kpi-lbl">Clientes Ativos</div><div class="kpi-val" id="kpi-ativos">0</div></div>
@@ -177,10 +179,11 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
 
 <!-- CLIENTES -->
 <div class="page" id="pg-clientes">
-  <div class="card">
-    <div class="sec-title">Clientes ativos</div>
-    <div id="clients-list"><div class="empty">Nenhum cliente cadastrado<br><small>Toque + para adicionar</small></div></div>
+  <div style="display:flex;gap:8px;margin-bottom:10px">
+    <button id="filtro-recorrente" onclick="setFiltroCliente('recorrente')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border2);background:var(--s3);color:var(--text);font-family:'Poppins',sans-serif;font-size:12px;font-weight:500;cursor:pointer">Recorrentes</button>
+    <button id="filtro-pontual" onclick="setFiltroCliente('pontual')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted2);font-family:'Poppins',sans-serif;font-size:12px;font-weight:500;cursor:pointer">Pontuais</button>
   </div>
+  <div class="card"><div class="sec-title" id="clientes-list-title">Clientes recorrentes</div><div id="clients-list"><div class="empty">Nenhum cliente cadastrado<br><small>Toque + para adicionar</small></div></div></div>
   <div class="card" id="card-concentracao" style="display:none">
     <div class="sec-title">Concentração de receita</div>
     <div id="concentracao-list"></div>
@@ -324,7 +327,7 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
   <div class="mhandle"></div><div class="mtitle">O que deseja adicionar?</div>
   <button class="sbtn" onclick="closeModal('modal-fab');abrirNovoCliente()">👥 Novo cliente</button>
   <button class="sbtn sbtn-dark" style="margin-top:8px" onclick="closeModal('modal-fab');abrirNovoCusto()">💳 Novo custo / parcela</button>
-  <button class="sbtn sbtn-dark" style="margin-top:8px" onclick="closeModal('modal-fab');openModal('modal-aporte')">💰 Registrar aporte</button>
+  <button class="sbtn sbtn-dark" style="margin-top:8px" onclick="closeModal('modal-fab');openModal('modal-aporte')">💰 Registrar entrada</button>
   <button class="sbtn sbtn-dark" style="margin-top:8px" onclick="closeModal('modal-fab');abrirReserva('alocar')">🏦 Alocar para reserva</button>
   <button class="sbtn sbtn-dark" style="margin-top:8px" onclick="closeModal('modal-fab');abrirReserva('retirar')">↩ Retirar da reserva</button>
   <button class="secbtn" onclick="closeModal('modal-fab')">Cancelar</button>
@@ -361,15 +364,23 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
   <input type="hidden" id="c-id">
   <div class="field"><label>Nome</label><input id="c-nome" type="text" placeholder="Dr. João Silva"></div>
   <div class="trow2">
+    <div class="field"><label>Tipo</label>
+      <select id="c-tipo">
+        <option value="recorrente">Recorrente</option>
+        <option value="pontual">Pontual</option>
+      </select>
+    </div>
     <div class="field"><label>Categoria</label><select id="c-cat"></select></div>
-    <div class="field"><label>Vencimento (dia)</label><input id="c-venc" type="number" placeholder="10" min="1" max="31"></div>
   </div>
   <div class="field"><label>Serviço contratado</label><input id="c-servico" type="text" placeholder="Ex: Gestão Google Ads"></div>
   <div class="trow2">
-    <div class="field"><label>Valor mensal (R$)</label><input id="c-valor" type="number" placeholder="1797"></div>
+    <div class="field"><label>Valor (R$)</label><input id="c-valor" type="number" placeholder="1797"></div>
+    <div class="field"><label>Vencimento (dia)</label><input id="c-venc" type="number" placeholder="10" min="1" max="31"></div>
+  </div>
+  <div class="trow2">
+    <div class="field"><label>Data de contratação</label><input id="c-inicio" type="date"></div>
     <div class="field"><label>Duração (meses)</label><input id="c-dur" type="number" placeholder="6" min="1"></div>
   </div>
-  <div class="field"><label>Data de contratação</label><input id="c-inicio" type="date"></div>
   <button class="sbtn" onclick="saveCliente()">Salvar cliente</button>
   <button class="sbtn sbtn-red" id="btn-del-cliente" style="display:none" onclick="deleteCliente()">Encerrar cliente</button>
   <button class="secbtn" onclick="closeModal('modal-cliente')">Cancelar</button>
@@ -439,11 +450,11 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
 </div></div>
 
 <div class="overlay" id="modal-aporte"><div class="modal">
-  <div class="mhandle"></div><div class="mtitle">Registrar aporte</div>
+  <div class="mhandle"></div><div class="mtitle">Registrar entrada</div>
   <div class="field"><label>Valor (R$)</label><input id="ap-valor" type="number" placeholder="0"></div>
   <div class="field"><label>Data</label><input id="ap-data" type="date"></div>
-  <div class="field"><label>Descrição</label><input id="ap-desc" type="text" placeholder="Transferência, reserva inicial..."></div>
-  <button class="sbtn" onclick="saveAporte()">Registrar aporte</button>
+  <div class="field"><label>Descrição</label><input id="ap-desc" type="text" placeholder="Ex: Pagamento pontual, transferência..."></div>
+  <button class="sbtn" onclick="saveAporte()">Registrar entrada</button>
   <button class="secbtn" onclick="closeModal('modal-aporte')">Cancelar</button>
 </div></div>
 
@@ -788,11 +799,26 @@ window.saveProlabore=function(){
   alert('Pró-labore salvo: '+fmt(v)+'/mês');render();
 };
 
+// FILTRO DE CLIENTES
+let filtroClienteTipo='recorrente';
+window.setFiltroCliente=function(tipo){
+  filtroClienteTipo=tipo;
+  document.getElementById('filtro-recorrente').style.background=tipo==='recorrente'?'var(--s3)':'transparent';
+  document.getElementById('filtro-recorrente').style.color=tipo==='recorrente'?'var(--text)':'var(--muted2)';
+  document.getElementById('filtro-recorrente').style.borderColor=tipo==='recorrente'?'var(--border2)':'var(--border)';
+  document.getElementById('filtro-pontual').style.background=tipo==='pontual'?'var(--s3)':'transparent';
+  document.getElementById('filtro-pontual').style.color=tipo==='pontual'?'var(--text)':'var(--muted2)';
+  document.getElementById('filtro-pontual').style.borderColor=tipo==='pontual'?'var(--border2)':'var(--border)';
+  document.getElementById('clientes-list-title').textContent=tipo==='recorrente'?'Clientes recorrentes':'Clientes pontuais';
+  renderClientesDireto();
+};
+
 // CLIENTE
 window.abrirNovoCliente=function(){
   document.getElementById('modal-cliente-title').textContent='Novo cliente';
   document.getElementById('c-id').value='';
   ['c-nome','c-valor','c-venc','c-inicio','c-dur','c-servico'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('c-tipo').value=filtroClienteTipo;
   buildCatClienteSelect('c-cat');
   document.getElementById('btn-del-cliente').style.display='none';
   openModal('modal-cliente');
@@ -805,8 +831,9 @@ window.editarCliente=function(id){
   document.getElementById('c-id').value=c.id;
   document.getElementById('c-nome').value=c.nome;
   document.getElementById('c-servico').value=c.servico||'';
+  document.getElementById('c-tipo').value=c.tipo||'recorrente';
   document.getElementById('c-valor').value=c.valor;
-  document.getElementById('c-venc').value=c.vencimento;
+  document.getElementById('c-venc').value=c.vencimento||'';
   document.getElementById('c-inicio').value=c.inicio||'';
   document.getElementById('c-dur').value=c.duracao||'';
   buildCatClienteSelect('c-cat',c.cat||'');
@@ -817,18 +844,19 @@ window.saveCliente=function(){
   const nome=document.getElementById('c-nome').value.trim();
   const servico=document.getElementById('c-servico').value.trim();
   const cat=document.getElementById('c-cat').value;
+  const tipo=document.getElementById('c-tipo').value;
   const valor=parseFloat(document.getElementById('c-valor').value)||0;
   const venc=parseInt(document.getElementById('c-venc').value)||10;
   const inicio=document.getElementById('c-inicio').value;
-  const dur=parseInt(document.getElementById('c-dur').value)||6;
+  const dur=parseInt(document.getElementById('c-dur').value)||0;
   const id=document.getElementById('c-id').value;
   if(!nome||!valor){alert('Preencha nome e valor');return}
   let clientes=[];try{clientes=JSON.parse(localStorage.getItem('ag_clientes')||'[]');}catch{}
   if(id){
     const idx=clientes.findIndex(x=>x.id===id);
-    if(idx>=0) clientes[idx]={...clientes[idx],nome,servico,cat,valor,vencimento:venc,inicio,duracao:dur,encerrado:false};
+    if(idx>=0) clientes[idx]={...clientes[idx],nome,servico,cat,tipo,valor,vencimento:venc,inicio,duracao:dur,encerrado:false};
   } else {
-    clientes.push({id:Date.now().toString(),nome,servico,cat,valor,vencimento:venc,inicio,duracao:dur,encerrado:false});
+    clientes.push({id:Date.now().toString(),nome,servico,cat,tipo,valor,vencimento:venc,inicio,duracao:dur,encerrado:false});
   }
   localStorage.setItem('ag_clientes',JSON.stringify(clientes));
   if(currentCode) localStorage.setItem('ag_last_'+currentCode,String(Date.now()+5000));
@@ -1034,7 +1062,7 @@ function render(){
   const aportes=lsObj('ag_aportes');
   const pagamentos=lsObj('ag_pagamentos');
 
-  const mrrC=todosClientes.reduce((s,c)=>s+c.valor,0);
+  const mrrC=todosClientes.filter(c=>(c.tipo||'recorrente')==='recorrente').reduce((s,c)=>s+c.valor,0);
   const{de,ate}=getFiltroRange();
   const mrrR=pagamentos.filter(p=>{
     if(p.mes===undefined||p.ano===undefined) return inRange(p.data);
@@ -1045,10 +1073,13 @@ function render(){
   const custosTotais=custos.filter(c=>c.tipo!=='avulso').reduce((s,c)=>s+c.valor,0);
   const totalAportes=aportes.reduce((s,a)=>s+a.valor,0);
   const totalRec=pagamentos.reduce((s,p)=>s+p.valor,0);
-  const ticket=todosClientes.length>0?Math.round(mrrC/todosClientes.length):0;
+  const ticket=todosClientes.filter(c=>(c.tipo||'recorrente')==='recorrente').length>0?Math.round(mrrC/todosClientes.filter(c=>(c.tipo||'recorrente')==='recorrente').length):0;
+  // Receita pontual = aportes no período
+  const receitaPontual=aportes.filter(a=>inRange(a.data)).reduce((s,a)=>s+a.valor,0);
+  const fatTotal=mrrR+receitaPontual;
 
   document.getElementById('kpi-mrr-c').textContent=fmt(mrrC);
-  document.getElementById('kpi-mrr-c-sub').textContent=todosClientes.length+' clientes';
+  document.getElementById('kpi-mrr-c-sub').textContent=todosClientes.filter(c=>(c.tipo||'recorrente')==='recorrente').length+' recorrentes';
   document.getElementById('kpi-mrr-r').textContent=fmt(mrrR);
   document.getElementById('mrr-bar').style.width=pct+'%';
   document.getElementById('mrr-pct').textContent=pct+'%';
@@ -1056,6 +1087,8 @@ function render(){
   document.getElementById('kpi-ticket').textContent=fmt(ticket);
   document.getElementById('kpi-ativos').textContent=todosClientes.length;
   document.getElementById('kpi-churn').textContent='0';
+  document.getElementById('kpi-pontual').textContent=fmt(receitaPontual);
+  document.getElementById('kpi-fat-total').textContent=fmt(fatTotal);
 
   renderAlertas(todosClientes,pagamentos);
   renderClientes(todosClientes,pagamentos);
@@ -1064,7 +1097,7 @@ function render(){
   renderFluxo(pagamentos,aportes,custos);
   renderFixoVariavel(custos);
   renderCustos(custos);
-  renderDRE(mrrR,custosTotais);
+  renderDRE(fatTotal,custosTotais);
   renderReserva();
   renderPizza(custos);
   renderMRRChart(pagamentos,todosClientes);
@@ -1100,7 +1133,7 @@ function renderClientesDireto(){
   const raw=localStorage.getItem('ag_clientes');
   let todos=[];
   try{ todos=JSON.parse(raw||'[]'); }catch{ todos=[]; }
-  todos=todos.filter(c=>!c.encerrado);
+  todos=todos.filter(c=>!c.encerrado&&(c.tipo||'recorrente')===filtroClienteTipo);
   if(!todos.length){
     el.innerHTML='<div class="empty">Nenhum cliente cadastrado<br><small>Toque + para adicionar</small></div>';
     document.getElementById('card-concentracao').style.display='none';
