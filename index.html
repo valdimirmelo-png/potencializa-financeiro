@@ -126,12 +126,28 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
 </div>
 <!-- PAINEL -->
 <div class="page active" id="pg-painel">
-  <div class="kpi-grid">
-    <div class="kpi"><div class="kpi-lbl">Faturamento Total</div><div class="kpi-val" style="color:var(--green)" id="kpi-fat-total">R$ 0</div><div class="kpi-sub" id="kpi-fat-sub">MRR + pontual</div></div>
-    <div class="kpi"><div class="kpi-lbl">Custos do Periodo</div><div class="kpi-val" style="color:var(--red)" id="kpi-gasto">R$ 0</div></div>
-    <div class="kpi kpi-full"><div class="kpi-lbl">Saldo de Caixa</div><div class="kpi-val" style="color:var(--green)" id="kpi-saldo">R$ 0</div><div class="kpi-sub">disponivel agora</div></div>
-  </div>
   <div id="alertas-wrap"></div>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-lbl">Faturamento</div><div class="kpi-val" style="color:var(--green)" id="kpi-fat-total">R$ 0</div><div class="kpi-sub" id="kpi-fat-sub">MRR + pontual</div></div>
+    <div class="kpi"><div class="kpi-lbl">Custos</div><div class="kpi-val" style="color:var(--red)" id="kpi-gasto">R$ 0</div></div>
+    <div class="kpi"><div class="kpi-lbl">Saldo</div><div class="kpi-val" style="color:var(--green)" id="kpi-saldo">R$ 0</div></div>
+    <div class="kpi"><div class="kpi-lbl">Investido</div><div class="kpi-val" style="color:var(--blue)" id="kpi-investido">R$ 0</div></div>
+  </div>
+  <div class="card" style="margin-bottom:10px">
+    <div class="sec-title">Fixo vs Variavel</div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+      <span style="font-size:11px;color:var(--muted2)">Fixo <span id="fv-fixo-pct" style="color:var(--green);font-weight:600">0%</span></span>
+      <span style="font-size:11px;color:var(--muted2)">Variavel <span id="fv-var-pct" style="color:var(--red);font-weight:600">0%</span></span>
+    </div>
+    <div style="height:10px;border-radius:99px;overflow:hidden;display:flex;background:var(--s3)">
+      <div id="fv-bar-fixo" style="height:100%;background:var(--green);transition:width .4s;width:0%"></div>
+      <div id="fv-bar-var" style="height:100%;background:var(--red);transition:width .4s;width:0%"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:6px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green)" id="fv-fixo-val">R$ 0</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--red)" id="fv-var-val">R$ 0</span>
+    </div>
+  </div>
   <div class="card" id="metas-card" style="display:none">
     <div class="sec-title">Metas de investimento</div>
     <div id="metas-list"></div>
@@ -178,31 +194,9 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
   <div class="card"><div class="sec-title" id="clientes-list-title">Clientes</div><div id="clients-list"><div class="empty">Nenhum cliente cadastrado</div></div></div>
   <div class="card" id="card-concentracao" style="display:none"><div class="sec-title">Concentracao de receita</div><div id="concentracao-list"></div></div>
 </div>
-<!-- CAIXA -->
+<!-- FLUXO -->
 <div class="page" id="pg-fin">
-  <div class="kpi-grid">
-    <div class="kpi"><div class="kpi-lbl">Faturamento</div><div class="kpi-val" style="color:var(--green)" id="cx-fat">R$ 0</div></div>
-    <div class="kpi"><div class="kpi-lbl">Custos</div><div class="kpi-val" style="color:var(--red)" id="cx-cus">R$ 0</div></div>
-    <div class="kpi"><div class="kpi-lbl">Saldo</div><div class="kpi-val" style="color:var(--green)" id="cx-sal">R$ 0</div></div>
-    <div class="kpi"><div class="kpi-lbl">Investido</div><div class="kpi-val" style="color:var(--blue)" id="cx-inv">R$ 0</div></div>
-  </div>
-  <div class="card" style="margin-bottom:10px">
-    <div class="sec-title">Fixo vs Variavel</div>
-    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-      <span style="font-size:11px;color:var(--muted2)">Fixo <span id="fv-fixo-pct" style="color:var(--green);font-weight:600">0%</span></span>
-      <span style="font-size:11px;color:var(--muted2)">Variavel <span id="fv-var-pct" style="color:var(--red);font-weight:600">0%</span></span>
-    </div>
-    <div style="height:10px;border-radius:99px;overflow:hidden;display:flex;background:var(--s3)">
-      <div id="fv-bar-fixo" style="height:100%;background:var(--green);transition:width .4s;width:0%"></div>
-      <div id="fv-bar-var" style="height:100%;background:var(--red);transition:width .4s;width:0%"></div>
-    </div>
-    <div style="display:flex;justify-content:space-between;margin-top:6px">
-      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green)" id="fv-fixo-val">R$ 0</span>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--red)" id="fv-var-val">R$ 0</span>
-    </div>
-  </div>
   <div class="card">
-    <div class="sec-title">Fluxo de caixa</div>
     <div class="filtro-fluxo">
       <button class="ff-btn active" onclick="setFiltroFluxo('todos',this)">Todos</button>
       <button class="ff-btn" onclick="setFiltroFluxo('entradas',this)">Entradas</button>
@@ -281,9 +275,9 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
 </div>
 <nav class="nav">
   <button class="nb active" onclick="goPage('painel',this)"><span class="ni">&#128202;</span><span>Painel</span></button>
-  <button class="nb" onclick="goPage('clientes',this)"><span class="ni">&#128101;</span><span>Clientes</span></button>
-  <button class="nb" onclick="goPage('fin',this)"><span class="ni">&#128179;</span><span>Caixa</span></button>
+  <button class="nb" onclick="goPage('fin',this)"><span class="ni">&#128179;</span><span>Fluxo</span></button>
   <button class="nb" onclick="goPage('analise',this)"><span class="ni">&#128200;</span><span>Analise</span></button>
+  <button class="nb" onclick="goPage('clientes',this)"><span class="ni">&#128101;</span><span>Clientes</span></button>
   <button class="nb" onclick="goPage('config',this)"><span class="ni">&#9881;&#65039;</span><span>Config</span></button>
 </nav>
 <button class="fab" onclick="openFab()">+</button>
@@ -830,8 +824,7 @@ function render(){
   document.getElementById('kpi-fat-sub').textContent='MRR '+fmt(mrrR)+' + Pontual '+fmt(receitaPontual);
   document.getElementById('kpi-gasto').textContent=fmt(custosTotais);
   document.getElementById('kpi-saldo').textContent=fmt(saldo);
-  document.getElementById('cx-fat').textContent=fmt(fatTotal);document.getElementById('cx-cus').textContent=fmt(custosTotais);
-  document.getElementById('cx-sal').textContent=fmt(saldo);document.getElementById('cx-inv').textContent=fmt(investido);
+  document.getElementById('kpi-investido').textContent=fmt(investido);
   document.getElementById('fv-fixo-pct').textContent=pF+'%';document.getElementById('fv-var-pct').textContent=pV+'%';
   document.getElementById('fv-bar-fixo').style.width=pF+'%';document.getElementById('fv-bar-var').style.width=pV+'%';
   document.getElementById('fv-fixo-val').textContent=fmt(fixo);document.getElementById('fv-var-val').textContent=fmt(variavel);
