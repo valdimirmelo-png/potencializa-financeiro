@@ -723,7 +723,7 @@ function renderAlertas(clientes,pagamentos){
     if(cs==='renovar'){var fim=new Date(c.inicio+'T00:00:00');fim.setMonth(fim.getMonth()+parseInt(c.duracao));var diff=Math.ceil((fim-hoje)/86400000);wrap.innerHTML+='<div class="alert-item alert-gold">Contrato de <strong>'+c.nome+'</strong> vence em '+diff+' dia'+(diff>1?'s':'')+'</div>';}
     if(cs==='vencido')wrap.innerHTML+='<div class="alert-item alert-red">Contrato de <strong>'+c.nome+'</strong> venceu</div>';
     var pagPeriodo=pagamentos.filter(function(p){return p.clienteId===c.id&&inRangePag(p);});
-    if(!pagPeriodo.length){var venceu=hoje>new Date(hoje.getFullYear(),hoje.getMonth(),c.vencimento);wrap.innerHTML+='<div class="alert-item '+(venceu?'alert-red':'alert-blue')+'"><strong>'+c.nome+'</strong> - sem pagamento no periodo</div>';}
+    if(!pagPeriodo.length){var venceu=hoje>new Date(hoje.getFullYear(),hoje.getMonth(),c.vencimento);wrap.innerHTML+='<div class="alert-item '+(venceu?'alert-red':'alert-blue')+'" style="justify-content:space-between"><span><strong>'+c.nome+'</strong> - sem pagamento no periodo</span><button onclick="openPago(\''+c.id+'\')" style="background:var(--green);border:none;border-radius:8px;padding:4px 12px;font-size:10px;font-weight:600;color:#0D3330;cursor:pointer;flex-shrink:0;font-family:Poppins,sans-serif">Marcar pago</button></div>';}
   });
 }
 
