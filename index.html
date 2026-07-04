@@ -152,6 +152,17 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
     <div class="sec-title">Metas de investimento</div>
     <div id="metas-list"></div>
   </div>
+  <div class="card" id="reserva-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="sec-title" style="margin:0">Reserva da empresa</div>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:500;color:var(--blue)" id="reserva-saldo">R$ 0</span>
+    </div>
+    <div id="reserva-movs-list"></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button onclick="abrirReserva('aporte')" style="flex:1;padding:8px;border-radius:10px;border:none;background:rgba(0,230,118,0.12);color:var(--green);font-family:Poppins,sans-serif;font-size:11px;font-weight:600;cursor:pointer">+ Aportar</button>
+      <button onclick="abrirReserva('retirada')" style="flex:1;padding:8px;border-radius:10px;border:none;background:rgba(255,82,82,0.12);color:var(--red);font-family:Poppins,sans-serif;font-size:11px;font-weight:600;cursor:pointer">- Retirar</button>
+    </div>
+  </div>
   <div class="card">
     <div class="sec-title">Despesas por categoria <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted)">(toque para detalhar)</span></div>
     <div class="chart-wrap"><canvas id="pizza-chart"></canvas></div>
@@ -287,6 +298,8 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
   <div class="mhandle"></div><div class="mtitle">O que deseja adicionar?</div>
   <button class="sbtn sbtn-dark" onclick="closeModal('modal-fab');abrirNovoCusto()">&#128179; Novo custo</button>
   <button class="sbtn sbtn-dark" style="margin-top:8px" onclick="closeModal('modal-fab');openModal('modal-entrada')">&#128176; Registrar entrada</button>
+  <button class="sbtn sbtn-dark" style="margin-top:8px" onclick="closeModal('modal-fab');abrirReserva('aporte')">&#127968; Aportar na reserva</button>
+  <button class="sbtn sbtn-dark" style="margin-top:8px" onclick="closeModal('modal-fab');abrirReserva('retirada')">&#8617; Retirar da reserva</button>
   <div style="margin:12px 0 8px;font-size:9px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;font-weight:600">Metas de investimento</div>
   <button class="sbtn sbtn-dark" onclick="closeModal('modal-fab');abrirMetaMovimento('aporte')">&#127974; Aportar em meta</button>
   <button class="sbtn sbtn-dark" style="margin-top:8px" onclick="closeModal('modal-fab');abrirMetaMovimento('rendimento')">&#128200; Registrar rendimento</button>
@@ -436,6 +449,27 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
   <button class="sbtn sbtn-red" onclick="deleteCatCliente()">Excluir</button>
   <button class="secbtn" onclick="closeModal('modal-edit-ccat')">Cancelar</button>
 </div></div>
+<!-- MODAL RESERVA -->
+<div class="overlay" id="modal-reserva"><div class="modal">
+  <div class="mhandle"></div><div class="mtitle" id="res-mov-title">Aportar na reserva</div>
+  <input type="hidden" id="res-tipo">
+  <div class="field"><label>Valor (R$)</label><input id="res-valor" type="number" placeholder="0"></div>
+  <div class="field"><label>Data</label><input id="res-data" type="date"></div>
+  <div class="field"><label>Descricao (opcional)</label><input id="res-desc" type="text" placeholder="Ex: Reserva mensal"></div>
+  <button class="sbtn" onclick="saveReserva()">Confirmar</button>
+  <button class="secbtn" onclick="closeModal('modal-reserva')">Cancelar</button>
+</div></div>
+<!-- MODAL OVERRIDE CUSTO -->
+<div class="overlay" id="modal-override-custo"><div class="modal">
+  <div class="mhandle"></div><div class="mtitle">Editar lancamento do mes</div>
+  <input type="hidden" id="ov-key">
+  <div class="field"><label>Descricao</label><input id="ov-desc" type="text" readonly style="opacity:0.6"></div>
+  <div class="field"><label>Valor deste mes (R$)</label><input id="ov-valor" type="number"></div>
+  <div class="field"><label>Data</label><input id="ov-data" type="date"></div>
+  <button class="sbtn" onclick="saveOverrideCusto()">Salvar so este mes</button>
+  <button class="sbtn sbtn-red" onclick="deleteOverrideCusto()">Remover ajuste</button>
+  <button class="secbtn" onclick="closeModal('modal-override-custo')">Cancelar</button>
+</div></div>
 <!-- MODAL EDIT META -->
 <div class="overlay" id="modal-edit-meta"><div class="modal">
   <div class="mhandle"></div><div class="mtitle">Editar meta</div>
@@ -452,7 +486,7 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
 firebase.initializeApp({apiKey:"AIzaSyAumtviUywh-t65PowT8knwP59UYHlSXwY",authDomain:"app-financeiro-78b59.firebaseapp.com",projectId:"app-financeiro-78b59",storageBucket:"app-financeiro-78b59.firebasestorage.app",messagingSenderId:"571576955944",appId:"1:571576955944:web:8e74e6b287cdf10edaf11d"});
 var db=firebase.firestore();
 var currentCode=null,syncTimer=null;
-var KEYS=['clientes','custos','entradas','pagamentos','cats','ccats','metas','meta_movs'];
+var KEYS=['clientes','custos','entradas','pagamentos','cats','ccats','metas','meta_movs','reserva_movs','custos_overrides'];
 function getRef(c){return db.collection('potencializa_ag_v2').doc(c)}
 function syncUp(){
   if(!currentCode)return;
@@ -746,7 +780,7 @@ function renderFluxo(pagamentos,entradas,custos){
     var r=getFiltroRange();
     custos.forEach(function(c){
       if(c.tipo==='avulso'){if(inRange(c.data))itens.push({tipo:'out',subtipo:'custo',id:c.id,desc:c.desc,data:c.data,valor:c.valor,cat:c.cat,custoId:c.id});}
-      else{var diaRef=c.data?new Date(c.data+'T00:00:00').getDate():5;var cur=new Date(r.de.getFullYear(),r.de.getMonth(),1);while(cur<=r.ate){var dataStr=cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(diaRef).padStart(2,'0');itens.push({tipo:'out',subtipo:'custo',id:c.id+'_'+cur.getMonth()+'_'+cur.getFullYear(),desc:c.desc+(c.tipo==='parcelado'?' (parcela)':''),data:dataStr,valor:c.valor,cat:c.cat,custoId:c.id});cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);}}
+      else{var diaRef=c.data?new Date(c.data+'T00:00:00').getDate():5;var cur=new Date(r.de.getFullYear(),r.de.getMonth(),1);while(cur<=r.ate){var mesKey=c.id+'_'+cur.getMonth()+'_'+cur.getFullYear();var overrides=ls('custos_overrides');var ov=overrides.filter(function(x){return x.key===mesKey;})[0];var valorMes=ov?ov.valor:c.valor;var dataStr=ov?ov.data:cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(diaRef).padStart(2,'0');itens.push({tipo:'out',subtipo:'custo',id:mesKey,desc:c.desc+(c.tipo==='parcelado'?' (parcela)':'')+(ov?' *':''),data:dataStr,valor:valorMes,cat:c.cat,custoId:c.id,mesKey:mesKey});cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);}}
     });
   }
   var cats=getCats();
@@ -758,7 +792,7 @@ function renderFluxo(pagamentos,entradas,custos){
   var html='';
   filtrados.forEach(function(i){
     var catInfo=cats[i.cat]||null;
-    var editFn=i.subtipo==='pag'?"abrirEditPag('"+i.id+"')":i.subtipo==='entrada'?"abrirEditEntrada('"+i.id+"')":(i.custoId?"editarCusto('"+i.custoId+"')":'');
+    var editFn=i.subtipo==='pag'?"abrirEditPag('"+i.id+"')":i.subtipo==='entrada'?"abrirEditEntrada('"+i.id+"')":(i.mesKey?"editarLancamentoCusto('"+i.custoId+"','"+i.mesKey+"')":(i.custoId?"editarCusto('"+i.custoId+"')":''));
     html+='<div class="flow-item">';
     html+='<div class="flow-icon '+(i.tipo==='in'?'flow-in':'flow-out')+'">'+(catInfo?catInfo.icon:i.tipo==='in'?'+':'-')+'</div>';
     html+='<div class="flow-info"><div class="flow-desc">'+i.desc+'</div><div class="flow-date">'+(i.data?new Date(i.data+'T00:00:00').toLocaleDateString('pt-BR'):'')+'</div></div>';
@@ -805,6 +839,16 @@ function renderMetasConfig(){
   el.innerHTML=html;
 }
 
+// RESERVA DA EMPRESA
+function getSaldoReserva(){return ls('reserva_movs').reduce(function(s,m){return m.tipo==='aporte'?s+m.valor:s-m.valor;},0);}
+function abrirReserva(tipo){document.getElementById('res-tipo').value=tipo;document.getElementById('res-mov-title').textContent=tipo==='aporte'?'Aportar na reserva':'Retirar da reserva';document.getElementById('res-valor').value='';document.getElementById('res-desc').value='';document.getElementById('res-data').value=new Date().toISOString().split('T')[0];openModal('modal-reserva');}
+function saveReserva(){var tipo=document.getElementById('res-tipo').value;var valor=parseFloat(document.getElementById('res-valor').value)||0;var data=document.getElementById('res-data').value;var desc=document.getElementById('res-desc').value.trim();if(!valor){alert('Informe o valor');return;}var movs=ls('reserva_movs');movs.push({id:Date.now().toString(),tipo:tipo,valor:valor,data:data,desc:desc});lsSave('reserva_movs',movs);closeModal('modal-reserva');render();}
+
+// OVERRIDE CUSTO FIXO POR MES
+function editarLancamentoCusto(custoId,mesKey){var c=ls('custos').filter(function(x){return x.id===custoId;})[0];if(!c)return;var overrides=ls('custos_overrides');var ov=overrides.filter(function(x){return x.key===mesKey;})[0];document.getElementById('ov-key').value=mesKey;document.getElementById('ov-desc').value=c.desc;document.getElementById('ov-valor').value=ov?ov.valor:c.valor;document.getElementById('ov-data').value=ov?ov.data:'';openModal('modal-override-custo');}
+function saveOverrideCusto(){var key=document.getElementById('ov-key').value;var valor=parseFloat(document.getElementById('ov-valor').value)||0;var data=document.getElementById('ov-data').value;if(!valor){alert('Informe o valor');return;}var overrides=ls('custos_overrides');var idx=-1;for(var i=0;i<overrides.length;i++){if(overrides[i].key===key){idx=i;break;}}if(idx>=0)overrides[idx]={key:key,valor:valor,data:data};else overrides.push({key:key,valor:valor,data:data});lsSave('custos_overrides',overrides);closeModal('modal-override-custo');render();}
+function deleteOverrideCusto(){var key=document.getElementById('ov-key').value;lsSave('custos_overrides',ls('custos_overrides').filter(function(x){return x.key!==key;}));closeModal('modal-override-custo');render();}
+
 // RENDER PRINCIPAL
 function render(){
   var clientes=JSON.parse(localStorage.getItem('ag_clientes')||'[]');
@@ -814,17 +858,17 @@ function render(){
   var receitaPontual=entradas.filter(function(a){return inRange(a.data);}).reduce(function(s,a){return s+a.valor;},0);
   var fatTotal=mrrR+receitaPontual;
   var custosTotais=custos.filter(function(c){return c.tipo!=='avulso';}).reduce(function(s,c){return s+c.valor;},0);
-  var totalEntradas=pagamentos.reduce(function(s,p){return s+p.valor;},0)+entradas.reduce(function(s,a){return s+a.valor;},0);
-  var investido=getTotalInvestido();
-  var saldo=totalEntradas-custosTotais-investido;
+  var totalEntradas=mrrR+receitaPontual;
+  var saldoPeriodo=totalEntradas-custosTotais;
+  var investidoPeriodo=ls('meta_movs').filter(function(m){return m.tipo==='aporte'&&inRange(m.data);}).reduce(function(s,m){return s+m.valor;},0)+ls('reserva_movs').filter(function(m){return m.tipo==='aporte'&&inRange(m.data);}).reduce(function(s,m){return s+m.valor;},0);
   var fixo=custos.filter(function(c){return c.natureza!=='variavel'&&c.tipo!=='avulso';}).reduce(function(s,c){return s+c.valor;},0);
   var variavel=custos.filter(function(c){return c.natureza==='variavel';}).reduce(function(s,c){return s+c.valor;},0);
   var total=fixo+variavel;var pF=total>0?Math.round(fixo/total*100):0;var pV=total>0?Math.round(variavel/total*100):0;
   document.getElementById('kpi-fat-total').textContent=fmt(fatTotal);
   document.getElementById('kpi-fat-sub').textContent='MRR '+fmt(mrrR)+' + Pontual '+fmt(receitaPontual);
   document.getElementById('kpi-gasto').textContent=fmt(custosTotais);
-  document.getElementById('kpi-saldo').textContent=fmt(saldo);
-  document.getElementById('kpi-investido').textContent=fmt(investido);
+  document.getElementById('kpi-saldo').textContent=fmt(saldoPeriodo);
+  document.getElementById('kpi-investido').textContent=fmt(investidoPeriodo);
   document.getElementById('fv-fixo-pct').textContent=pF+'%';document.getElementById('fv-var-pct').textContent=pV+'%';
   document.getElementById('fv-bar-fixo').style.width=pF+'%';document.getElementById('fv-bar-var').style.width=pV+'%';
   document.getElementById('fv-fixo-val').textContent=fmt(fixo);document.getElementById('fv-var-val').textContent=fmt(variavel);
@@ -832,7 +876,18 @@ function render(){
   renderFluxo(pagamentos,entradas,custos);
   renderPizza(custos);
   renderMetas();
+  renderReservaCard();
   renderCatsList();renderCatsClienteList();renderMetasConfig();
+}
+
+function renderReservaCard(){
+  var el=document.getElementById('reserva-card');if(!el)return;
+  var saldo=getSaldoReserva();
+  document.getElementById('reserva-saldo').textContent=fmt(saldo);
+  var movs=ls('reserva_movs').slice().sort(function(a,b){return new Date(b.data)-new Date(a.data);}).slice(0,5);
+  var html='';
+  movs.forEach(function(m){html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)"><div><div style="font-size:11px;font-weight:500">'+(m.tipo==='aporte'?'Aporte':'Retirada')+(m.desc?' - '+m.desc:'')+'</div><div style="font-size:10px;color:var(--muted)">'+(m.data?new Date(m.data+'T00:00:00').toLocaleDateString('pt-BR'):'')+'</div></div><span style="font-family:JetBrains Mono,monospace;font-size:12px;font-weight:500;color:'+(m.tipo==='aporte'?'var(--green)':'var(--red)')+'">'+(m.tipo==='aporte'?'+':'-')+fmt(m.valor)+'</span></div>';});
+  document.getElementById('reserva-movs-list').innerHTML=html||'<div class="empty" style="padding:10px 0">Nenhuma movimentacao</div>';
 }
 
 // ANALISE
