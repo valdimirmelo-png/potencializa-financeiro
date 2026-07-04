@@ -780,7 +780,7 @@ function renderFluxo(pagamentos,entradas,custos){
     var r=getFiltroRange();
     custos.forEach(function(c){
       if(c.tipo==='avulso'){if(inRange(c.data))itens.push({tipo:'out',subtipo:'custo',id:c.id,desc:c.desc,data:c.data,valor:c.valor,cat:c.cat,custoId:c.id});}
-      else{var diaRef=c.data?new Date(c.data+'T00:00:00').getDate():5;var cur=new Date(r.de.getFullYear(),r.de.getMonth(),1);while(cur<=r.ate){var mesKey=c.id+'_'+cur.getMonth()+'_'+cur.getFullYear();var overrides=ls('custos_overrides');var ov=overrides.filter(function(x){return x.key===mesKey;})[0];var valorMes=ov?ov.valor:c.valor;var dataStr=ov?ov.data:cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(diaRef).padStart(2,'0');itens.push({tipo:'out',subtipo:'custo',id:mesKey,desc:c.desc+(c.tipo==='parcelado'?' (parcela)':'')+(ov?' *':''),data:dataStr,valor:valorMes,cat:c.cat,custoId:c.id,mesKey:mesKey});cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);}}
+      else{var diaRef=c.data?new Date(c.data+'T00:00:00').getDate():5;var inicioMes=c.data?new Date(new Date(c.data+'T00:00:00').getFullYear(),new Date(c.data+'T00:00:00').getMonth(),1):new Date(0);var cur=new Date(r.de.getFullYear(),r.de.getMonth(),1);while(cur<=r.ate){if(cur>=inicioMes){var mesKey=c.id+'_'+cur.getMonth()+'_'+cur.getFullYear();var overrides=ls('custos_overrides');var ov=overrides.filter(function(x){return x.key===mesKey;})[0];var valorMes=ov?ov.valor:c.valor;var dataStr=ov?ov.data:cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(diaRef).padStart(2,'0');itens.push({tipo:'out',subtipo:'custo',id:mesKey,desc:c.desc+(c.tipo==='parcelado'?' (parcela)':'')+(ov?' *':''),data:dataStr,valor:valorMes,cat:c.cat,custoId:c.id,mesKey:mesKey});}cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);}}
     });
   }
   var cats=getCats();
@@ -857,9 +857,17 @@ function render(){
   var mrrR=pagamentos.filter(function(p){return inRangePag(p);}).reduce(function(s,p){return s+p.valor;},0);
   var receitaPontual=entradas.filter(function(a){return inRange(a.data);}).reduce(function(s,a){return s+a.valor;},0);
   var fatTotal=mrrR+receitaPontual;
-  var custosTotais=custos.filter(function(c){return c.tipo!=='avulso';}).reduce(function(s,c){return s+c.valor;},0);
+  var custosTotais=custos.filter(function(c){return c.tipo!=='avulso';}).reduce(function(s,c){
+    var inicioMes=c.data?new Date(new Date(c.data+'T00:00:00').getFullYear(),new Date(c.data+'T00:00:00').getMonth(),1):new Date(0);
+    var r=getFiltroRange();
+    // Conta quantos meses do período filtrado estão dentro do range do custo
+    var mesesValidos=0;var cur=new Date(r.de.getFullYear(),r.de.getMonth(),1);
+    while(cur<=r.ate){if(cur>=inicioMes)mesesValidos++;cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);}
+    return s+c.valor*mesesValidos;
+  },0);
   var totalEntradas=mrrR+receitaPontual;
-  var saldoPeriodo=totalEntradas-custosTotais;
+  var reservaPeriodo=ls('reserva_movs').filter(function(m){return inRange(m.data);}).reduce(function(s,m){return m.tipo==='aporte'?s+m.valor:s-m.valor;},0);
+  var saldoPeriodo=totalEntradas-custosTotais-reservaPeriodo;
   var investidoPeriodo=ls('meta_movs').filter(function(m){return m.tipo==='aporte'&&inRange(m.data);}).reduce(function(s,m){return s+m.valor;},0)+ls('reserva_movs').filter(function(m){return m.tipo==='aporte'&&inRange(m.data);}).reduce(function(s,m){return s+m.valor;},0);
   var fixo=custos.filter(function(c){return c.natureza!=='variavel'&&c.tipo!=='avulso';}).reduce(function(s,c){return s+c.valor;},0);
   var variavel=custos.filter(function(c){return c.natureza==='variavel';}).reduce(function(s,c){return s+c.valor;},0);
