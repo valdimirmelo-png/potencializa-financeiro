@@ -748,7 +748,7 @@ function renderClientesDireto(){
   var tipoFiltro=(document.getElementById('filtro-cl-tipo')||{}).value||'todos';
   var filtrados=todos.filter(function(c){if(statusFiltro==='ativo')return !c.encerrado;if(statusFiltro==='encerrado')return c.encerrado===true;return true;});
   if(tipoFiltro!=='todos')filtrados=filtrados.filter(function(c){return (c.tipo||'recorrente')===tipoFiltro;});
-  var recorrentes=todos.filter(function(c){return !c.encerrado&&(c.tipo||'recorrente')==='recorrente';});
+  var recorrentes=JSON.parse(localStorage.getItem('ag_clientes')||'[]').filter(function(c){return !c.encerrado&&(c.tipo||'recorrente')==='recorrente';});
   var mrrC=recorrentes.reduce(function(s,c){return s+c.valor;},0);
   var ticket=recorrentes.length>0?Math.round(mrrC/recorrentes.length):0;
   document.getElementById('cl-mrr').textContent=fmt(mrrC);
