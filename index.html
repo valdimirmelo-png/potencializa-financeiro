@@ -128,18 +128,11 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
 <div class="page active" id="pg-painel">
   <div id="alertas-wrap"></div>
   <div class="kpi-grid">
-    <div class="kpi"><div class="kpi-lbl">Faturamento</div><div class="kpi-val" style="color:var(--green)" id="kpi-fat-total">R$ 0</div><div class="kpi-sub" id="kpi-fat-sub"></div></div>
-    <div class="kpi"><div class="kpi-lbl">Custos</div><div class="kpi-val" style="color:var(--red)" id="kpi-gasto">R$ 0</div></div>
-    <div class="kpi kpi-full" style="border:1px solid var(--border2)">
-      <div class="kpi-lbl">Saldo disponivel</div>
-      <div class="kpi-val" style="color:var(--green);font-size:22px" id="kpi-saldo">R$ 0</div>
-      <div style="display:flex;justify-content:space-between;margin-top:8px">
-        <div><div style="font-size:9px;color:var(--muted)">ENTRADAS</div><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--green)" id="cx-entradas">R$ 0</div></div>
-        <div style="text-align:right"><div style="font-size:9px;color:var(--muted)">SAIDAS</div><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--red)" id="cx-saidas">R$ 0</div></div>
-      </div>
-    </div>
-    <div class="kpi"><div class="kpi-lbl">Nao recebido</div><div class="kpi-val" style="color:var(--gold)" id="kpi-nao-recebido">R$ 0</div><div class="kpi-sub">vendas pendentes</div></div>
-    <div class="kpi"><div class="kpi-lbl">Investido</div><div class="kpi-val" style="color:var(--blue)" id="kpi-investido">R$ 0</div><div class="kpi-sub">no periodo</div></div>
+    <div class="kpi kpi-full"><div class="kpi-lbl">Faturamento</div><div class="kpi-val" style="color:var(--green)" id="kpi-fat-total">R$ 0</div><div class="kpi-sub" id="kpi-fat-sub"></div></div>
+    <div class="kpi kpi-full"><div class="kpi-lbl">Custos</div><div class="kpi-val" style="color:var(--red)" id="kpi-gasto">R$ 0</div></div>
+    <div class="kpi kpi-full"><div class="kpi-lbl">Saldo do caixa</div><div class="kpi-val" style="color:var(--green)" id="kpi-saldo">R$ 0</div></div>
+    <div class="kpi"><div class="kpi-lbl">A receber</div><div class="kpi-val" style="color:var(--gold)" id="kpi-nao-recebido">R$ 0</div></div>
+    <div class="kpi"><div class="kpi-lbl">Investido no periodo</div><div class="kpi-val" style="color:var(--blue)" id="kpi-investido">R$ 0</div></div>
   </div>
   <div class="card" style="margin-bottom:10px">
     <div class="sec-title">Fixo vs Variavel</div>
@@ -500,6 +493,7 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
   <div class="field"><label>Valor deste mes (R$)</label><input id="ov-valor" type="number"></div>
   <div class="field"><label>Data</label><input id="ov-data" type="date"></div>
   <button class="sbtn" onclick="saveOverrideCusto()">Salvar so este mes</button>
+  <button class="sbtn sbtn-dark" style="margin-top:8px" onclick="editarCustoBase()">Editar custo base</button>
   <button class="sbtn sbtn-red" onclick="deleteOverrideCusto()">Remover ajuste</button>
   <button class="secbtn" onclick="closeModal('modal-override-custo')">Cancelar</button>
 </div></div>
@@ -861,8 +855,42 @@ function confirmarPagPontual(){
 }
 
 // RENDER ALERTAS
+function confirmarRecebimento(entradaId){
+  if(!confirm('Confirmar que este valor foi recebido?'))return;
+  // The entry already exists - just mark as received today
+  var entradas=ls('entradas');
+  for(var i=0;i<entradas.length;i++){
+    if(entradas[i].id===entradaId){
+      entradas[i].dataRecebimento=new Date().toISOString().split('T')[0];
+      break;
+    }
+  }
+  lsSave('entradas',entradas);
+  render();
+}
+
 function renderAlertas(clientes,pagamentos){
   var wrap=document.getElementById('alertas-wrap');wrap.innerHTML='';var hoje=new Date();
+  // Alertas de recebimento pendente
+  var hoje2=new Date();hoje2.setHours(0,0,0,0);
+  ls('entradas').filter(function(a){
+    if(!a.pontual||!a.dataRecebimento)return false;
+    var dReceb=new Date(a.dataRecebimento+'T00:00:00');
+    return dReceb<=hoje2;
+  }).forEach(function(a){
+    var dVenda=a.data||a.dataVenda;
+    var descVenda=dVenda?new Date(dVenda+'T00:00:00').toLocaleDateString('pt-BR'):'';
+    var alertDesc=a.desc?a.desc.replace('Venda - ',''):'';
+    var alertHtml='<div class="alert-item alert-blue" style="justify-content:space-between">';
+    alertHtml+='<span>A receber: <strong>'+fmt(a.valor)+'</strong>';
+    if(alertDesc)alertHtml+=' - '+alertDesc;
+    if(descVenda)alertHtml+=' (venda '+descVenda+')';
+    alertHtml+='</span>';
+    alertHtml+='<button onclick="confirmarRecebimento(this.dataset.id)" data-id="'+a.id+'" style="background:var(--blue);border:none;border-radius:8px;padding:4px 12px;font-size:10px;font-weight:600;color:#0D3330;cursor:pointer;flex-shrink:0;font-family:Poppins,sans-serif">Confirmar</button>';
+    alertHtml+='</div>';
+    wrap.innerHTML+=alertHtml;
+  });
+
   clientes.filter(function(c){return !c.encerrado&&c.tipo!=='pontual';}).forEach(function(c){
     var cs=getContractStatus(c);
     if(cs==='renovar'){var fim=new Date(c.inicio+'T00:00:00');fim.setMonth(fim.getMonth()+parseInt(c.duracao));var diff=Math.ceil((fim-hoje)/86400000);wrap.innerHTML+='<div class="alert-item alert-gold">Contrato de <strong>'+c.nome+'</strong> vence em '+diff+' dia'+(diff>1?'s':'')+'</div>';}
@@ -897,7 +925,7 @@ function renderFluxo(pagamentos,entradas,custos){
   if(filtroFluxoTipo!=='entradas'){
     var r=getFiltroRange();
     custos.forEach(function(c){
-      if(c.tipo==='avulso'){if(inRange(c.data))itens.push({tipo:'out',subtipo:'custo',id:c.id,desc:c.desc,data:c.data,valor:c.valor,cat:c.cat,custoId:c.id});}
+      if(c.tipo==='avulso'){if(inRange(c.data))itens.push({tipo:'out',subtipo:'custo',id:c.id,desc:c.desc,data:c.data,valor:c.valor,cat:c.cat,custoId:c.id,avulso:true});}
       else{var diaRef=c.data?new Date(c.data+'T00:00:00').getDate():5;var inicioMes=new Date(0);if(c.data){var dp=c.data.split('-');inicioMes=new Date(parseInt(dp[0]),parseInt(dp[1])-1,1);}var cur=new Date(r.de.getFullYear(),r.de.getMonth(),1);while(cur<=r.ate){if(cur>=inicioMes){var mesKey=c.id+'_'+cur.getMonth()+'_'+cur.getFullYear();var overrides=ls('custos_overrides');var ov=overrides.filter(function(x){return x.key===mesKey;})[0];var valorMes=ov?ov.valor:c.valor;var dataStr=ov?ov.data:cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(diaRef).padStart(2,'0');itens.push({tipo:'out',subtipo:'custo',id:mesKey,desc:c.desc+(c.tipo==='parcelado'?' (parcela)':'')+(ov?' *':''),data:dataStr,valor:valorMes,cat:c.cat,custoId:c.id,mesKey:mesKey});}cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);}}
     });
   }
@@ -915,7 +943,7 @@ function renderFluxo(pagamentos,entradas,custos){
     html+='<div class="flow-icon '+(i.tipo==='in'?'flow-in':'flow-out')+'">'+(catInfo?catInfo.icon:i.tipo==='in'?'+':'-')+'</div>';
     html+='<div class="flow-info"><div class="flow-desc">'+i.desc+'</div><div class="flow-date">'+(i.data?new Date(i.data+'T00:00:00').toLocaleDateString('pt-BR'):'')+'</div></div>';
     html+='<div class="flow-val '+(i.tipo)+'">'+(i.tipo==='in'?'+':'-')+fmt(i.valor)+'</div>';
-    var delFn=i.subtipo==='pag'?"excluirLancamento('pag','"+i.id+"')":i.subtipo==='entrada'?"excluirLancamento('entrada','"+i.id+"')":'';
+    var delFn=i.subtipo==='pag'?"excluirLancamento('pag','"+i.id+"')":i.subtipo==='entrada'?"excluirLancamento('entrada','"+i.id+"')":(i.avulso?"excluirCustoAvulso('"+i.custoId+"')":'');
     html+='<div class="flow-actions"><button class="icon-btn" onclick="'+editFn+'">&#9999;</button>'+(delFn?'<button class="icon-btn" style="color:var(--red)" onclick="'+delFn+'">&#10005;</button>':'')+'</div>';
     html+='</div>';
   });
@@ -965,6 +993,13 @@ function saveReserva(){var tipo=document.getElementById('res-tipo').value;var va
 
 // OVERRIDE CUSTO FIXO POR MES
 function editarLancamentoCusto(custoId,mesKey){var c=ls('custos').filter(function(x){return x.id===custoId;})[0];if(!c)return;var overrides=ls('custos_overrides');var ov=overrides.filter(function(x){return x.key===mesKey;})[0];document.getElementById('ov-key').value=mesKey;document.getElementById('ov-desc').value=c.desc;document.getElementById('ov-valor').value=ov?ov.valor:c.valor;document.getElementById('ov-data').value=ov?ov.data:'';openModal('modal-override-custo');}
+function editarCustoBase(){
+  var key=document.getElementById('ov-key').value;
+  var custoId=key.split('_')[0];
+  closeModal('modal-override-custo');
+  editarCusto(custoId);
+}
+
 function saveOverrideCusto(){var key=document.getElementById('ov-key').value;var valor=parseFloat(document.getElementById('ov-valor').value)||0;var data=document.getElementById('ov-data').value;if(!valor){alert('Informe o valor');return;}var overrides=ls('custos_overrides');var idx=-1;for(var i=0;i<overrides.length;i++){if(overrides[i].key===key){idx=i;break;}}if(idx>=0)overrides[idx]={key:key,valor:valor,data:data};else overrides.push({key:key,valor:valor,data:data});lsSave('custos_overrides',overrides);closeModal('modal-override-custo');render();}
 function deleteOverrideCusto(){var key=document.getElementById('ov-key').value;lsSave('custos_overrides',ls('custos_overrides').filter(function(x){return x.key!==key;}));closeModal('modal-override-custo');render();}
 
@@ -1022,8 +1057,6 @@ function render(){
     return inRange(dVenda)&&dReceb&&dReceb>hoje;
   }).reduce(function(s,a){return s+a.valor;},0);
   document.getElementById('kpi-saldo').textContent=fmt(saldoCaixa);
-  document.getElementById('cx-entradas').textContent=fmt(entradasCaixa);
-  document.getElementById('cx-saidas').textContent=fmt(custosTotais);
   document.getElementById('kpi-investido').textContent=fmt(investidoPeriodo);
   document.getElementById('kpi-nao-recebido').textContent=fmt(naoRecebido);
   document.getElementById('fv-fixo-pct').textContent=pF+'%';document.getElementById('fv-var-pct').textContent=pV+'%';
@@ -1037,6 +1070,11 @@ function render(){
   renderCatsList();renderCatsClienteList();renderMetasConfig();
 }
 
+function excluirCustoAvulso(id){
+  if(!confirm('Excluir este custo?'))return;
+  lsSave('custos',ls('custos').filter(function(c){return c.id!==id;}));
+  render();
+}
 function excluirLancamento(subtipo,id){
   if(!confirm('Excluir este lancamento?'))return;
   if(subtipo==='pag'){lsSave('pagamentos',ls('pagamentos').filter(function(p){return p.key!==id;}));}
