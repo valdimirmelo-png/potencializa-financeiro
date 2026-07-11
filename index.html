@@ -222,17 +222,12 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
 </div>
 <!-- ANALISE -->
 <div class="page" id="pg-analise">
-  <div class="card" style="margin-bottom:10px">
-    <div class="sec-title">Periodo de analise</div>
-    <div class="trow2">
-      <div class="field"><label>De</label><input id="an-de" type="date"></div>
-      <div class="field"><label>Ate</label><input id="an-ate" type="date"></div>
-    </div>
-    <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
-      <button onclick="setPeriodoAnalise(3,this)" class="per-btn">3 meses</button>
-      <button onclick="setPeriodoAnalise(6,this)" class="per-btn">6 meses</button>
-      <button onclick="setPeriodoAnalise(12,this)" class="per-btn">12 meses</button>
-    </div>
+  <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+    <button onclick="setPeriodoAnalise('mes',this)" class="per-btn">Este mes</button>
+    <button onclick="setPeriodoAnalise('mes-passado',this)" class="per-btn">Mes passado</button>
+    <button onclick="setPeriodoAnalise(3,this)" class="per-btn">3 meses</button>
+    <button onclick="setPeriodoAnalise(6,this)" class="per-btn">6 meses</button>
+    <button onclick="setPeriodoAnalise(12,this)" class="per-btn">12 meses</button>
   </div>
   <div class="card"><div class="sec-title">Faturamento ao longo do tempo</div><div class="chart-wrap" style="height:200px"><canvas id="an-faturamento"></canvas></div></div>
   <div class="card"><div class="sec-title">Custos ao longo do tempo</div><div class="chart-wrap" style="height:200px"><canvas id="an-custos"></canvas></div></div>
@@ -1104,9 +1099,15 @@ function renderReservaCard(){
 }
 
 // ANALISE
-function renderAnalise(){
-  var de=new Date(document.getElementById('an-de').value+'T00:00:00');
-  var ate=new Date(document.getElementById('an-ate').value+'T23:59:59');
+function renderAnaliseComPeriodo(deStr,ateStr){
+  renderAnalise(deStr,ateStr);
+}
+function renderAnalise(deStr,ateStr){
+  var h=new Date();
+  if(!deStr)deStr=new Date(h.getFullYear(),h.getMonth()-2,1).toISOString().split('T')[0];
+  if(!ateStr)ateStr=h.toISOString().split('T')[0];
+  var de=new Date(deStr+'T00:00:00');
+  var ate=new Date(ateStr+'T23:59:59');
   if(isNaN(de)||isNaN(ate))return;
   var meses=[];var cur=new Date(de.getFullYear(),de.getMonth(),1);
   while(cur<=ate){meses.push({m:cur.getMonth(),y:cur.getFullYear()});cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);}
@@ -1115,9 +1116,22 @@ function renderAnalise(){
   var labels=meses.map(function(x){return MESES[x.m]+(meses.length>6?'/'+String(x.y).slice(2):'');});
   var dataMRR=meses.map(function(x){return pagamentos.filter(function(p){return p.mes===x.m&&p.ano===x.y;}).reduce(function(s,p){return s+p.valor;},0);});
   var dataPontual=meses.map(function(x){return entradas.filter(function(a){if(!a.data)return false;var d=new Date(a.data+'T00:00:00');return d.getMonth()===x.m&&d.getFullYear()===x.y;}).reduce(function(s,a){return s+a.valor;},0);});
-  var cF=custos.filter(function(c){return c.natureza!=='variavel'&&c.tipo!=='avulso';}).reduce(function(s,c){return s+c.valor;},0);
-  var cV=custos.filter(function(c){return c.natureza==='variavel';}).reduce(function(s,c){return s+c.valor;},0);
-  var dataFixo=meses.map(function(){return cF;});var dataVar=meses.map(function(){return cV;});
+  var dataFixo=meses.map(function(x){
+    var total=0;
+    custos.filter(function(c){return c.natureza!=='variavel'&&c.tipo!=='avulso';}).forEach(function(c){
+      var parts=c.data?c.data.split('-'):[0,1];
+      var ini=new Date(parseInt(parts[0]),parseInt(parts[1])-1,1);
+      if(new Date(x.y,x.m,1)>=ini)total+=c.valor;
+    });return total;
+  });
+  var dataVar=meses.map(function(x){
+    var total=0;
+    custos.filter(function(c){return c.natureza==='variavel';}).forEach(function(c){
+      var parts=c.data?c.data.split('-'):[0,1];
+      var ini=new Date(parseInt(parts[0]),parseInt(parts[1])-1,1);
+      if(new Date(x.y,x.m,1)>=ini)total+=c.valor;
+    });return total;
+  });
   var dataMargem=meses.map(function(_,i){return (dataMRR[i]+dataPontual[i])-(dataFixo[i]+dataVar[i]);});
   Object.keys(anCharts).forEach(function(k){try{anCharts[k].destroy();}catch(e){}});anCharts={};
   var tO={color:'rgba(240,239,233,0.35)',font:{size:10,family:'Poppins'}};var gO={color:'rgba(240,239,233,0.04)'};
@@ -1126,7 +1140,16 @@ function renderAnalise(){
   var c2=document.getElementById('an-custos');if(c2)anCharts.cus=new Chart(c2,{type:'bar',data:{labels:labels,datasets:[{label:'Fixo',data:dataFixo,backgroundColor:'rgba(0,146,92,0.8)',borderRadius:4,stack:'c'},{label:'Variavel',data:dataVar,backgroundColor:'rgba(255,82,82,0.75)',borderRadius:4,stack:'c'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},scales:{x:{ticks:tO,grid:{display:false},stacked:true},y:{ticks:{color:tO.color,font:tO.font,callback:fK},grid:gO,stacked:true}}}});
   var c3=document.getElementById('an-margem');if(c3)anCharts.mar=new Chart(c3,{type:'line',data:{labels:labels,datasets:[{label:'Margem',data:dataMargem,borderColor:'#00E676',backgroundColor:'rgba(0,230,118,0.07)',tension:0.35,fill:true,pointRadius:4,pointBackgroundColor:dataMargem.map(function(v){return v>=0?'#00E676':'#ff5252';})}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:tO,grid:{display:false}},y:{ticks:{color:tO.color,font:tO.font,callback:fK},grid:gO}}}});
 }
-function setPeriodoAnalise(n,btn){document.querySelectorAll('.per-btn').forEach(function(b){b.style.background='transparent';b.style.color='rgba(240,239,233,0.7)';b.style.borderColor='rgba(0,230,118,0.08)';});btn.style.background='var(--s3)';btn.style.color='var(--text)';btn.style.borderColor='var(--border2)';var h=new Date();document.getElementById('an-ate').value=h.toISOString().split('T')[0];document.getElementById('an-de').value=new Date(h.getFullYear(),h.getMonth()-(n-1),1).toISOString().split('T')[0];renderAnalise();}
+function setPeriodoAnalise(n,btn){
+  document.querySelectorAll('.per-btn').forEach(function(b){b.style.background='transparent';b.style.color='rgba(240,239,233,0.7)';b.style.borderColor='rgba(0,230,118,0.08)';});
+  if(btn){btn.style.background='var(--s3)';btn.style.color='var(--text)';btn.style.borderColor='var(--border2)';}
+  var h=new Date();
+  var de,ate=h.toISOString().split('T')[0];
+  if(n==='mes'){de=new Date(h.getFullYear(),h.getMonth(),1).toISOString().split('T')[0];ate=new Date(h.getFullYear(),h.getMonth()+1,0).toISOString().split('T')[0];}
+  else if(n==='mes-passado'){de=new Date(h.getFullYear(),h.getMonth()-1,1).toISOString().split('T')[0];ate=new Date(h.getFullYear(),h.getMonth(),0).toISOString().split('T')[0];}
+  else{de=new Date(h.getFullYear(),h.getMonth()-(n-1),1).toISOString().split('T')[0];}
+  renderAnaliseComPeriodo(de,ate);
+}
 
 // BACKUP
 function exportarBackup(){var data={clientes:JSON.parse(localStorage.getItem('ag_clientes')||'[]'),custos:ls('custos'),entradas:ls('entradas'),pagamentos:ls('pagamentos'),metas:ls('metas'),meta_movs:ls('meta_movs'),exportadoEm:new Date().toISOString()};var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='potencializa_backup_'+new Date().toISOString().split('T')[0]+'.json';a.click();}
