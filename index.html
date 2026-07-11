@@ -128,7 +128,7 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
 <div class="page active" id="pg-painel">
   <div id="alertas-wrap"></div>
   <div class="kpi-grid">
-    <div class="kpi"><div class="kpi-lbl">Faturamento</div><div class="kpi-val" style="color:var(--green)" id="kpi-fat-total">R$ 0</div><div class="kpi-sub" id="kpi-fat-sub">MRR + pontual</div></div>
+    <div class="kpi"><div class="kpi-lbl">Faturamento do periodo</div><div class="kpi-val" style="color:var(--green)" id="kpi-fat-total">R$ 0</div><div class="kpi-sub" id="kpi-fat-sub">MRR + pontual</div></div>
     <div class="kpi"><div class="kpi-lbl">Custos</div><div class="kpi-val" style="color:var(--red)" id="kpi-gasto">R$ 0</div></div>
     <div class="kpi"><div class="kpi-lbl">Saldo</div><div class="kpi-val" style="color:var(--green)" id="kpi-saldo">R$ 0</div></div>
     <div class="kpi"><div class="kpi-lbl">Investido</div><div class="kpi-val" style="color:var(--blue)" id="kpi-investido">R$ 0</div></div>
@@ -450,6 +450,18 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
   <button class="sbtn" onclick="saveEditCatCliente()">Salvar</button>
   <button class="sbtn sbtn-red" onclick="deleteCatCliente()">Excluir</button>
   <button class="secbtn" onclick="closeModal('modal-edit-ccat')">Cancelar</button>
+</div></div>
+<!-- MODAL PAG PONTUAL -->
+<div class="overlay" id="modal-pag-pontual"><div class="modal">
+  <div class="mhandle"></div>
+  <div class="mtitle" id="pag-pont-titulo">Confirmar recebimento</div>
+  <div style="text-align:center;margin-bottom:16px">
+    <div style="font-size:10px;color:var(--muted);margin-bottom:4px">VALOR</div>
+    <div style="font-family:JetBrains Mono,monospace;font-size:24px;font-weight:500;color:var(--green)" id="pag-pont-valor">R$ 0</div>
+  </div>
+  <div class="field"><label>Data de recebimento</label><input id="pag-pont-data" type="date"></div>
+  <button class="sbtn" onclick="confirmarPagPontual()">Confirmar recebimento</button>
+  <button class="secbtn" onclick="closeModal('modal-pag-pontual')">Cancelar</button>
 </div></div>
 <!-- MODAL CICLO -->
 <div class="overlay" id="modal-ciclo"><div class="modal">
@@ -793,20 +805,27 @@ function renderClientesDireto(){
 }
 
 // MARCAR PAGO PONTUAL
+var _pagPontualId=null;
 function marcarPagoPontual(id){
+  _pagPontualId=id;
   var clientes=JSON.parse(localStorage.getItem('ag_clientes')||'[]');
   var c=clientes.filter(function(x){return x.id===id;})[0];if(!c)return;
-  var data=new Date().toISOString().split('T')[0];
-  // Registra pagamento vinculado ao cliente
-  var pags=ls('pagamentos');
-  var dataD=new Date(data+'T00:00:00');
-  var key=id+'_pont_'+Date.now();
-  pags.push({key:key,clienteId:id,valor:c.valor,data:data,mes:dataD.getMonth(),ano:dataD.getFullYear(),pontual:true});
-  lsSave('pagamentos',pags);
-  // Registra no fluxo como entrada pontual
+  document.getElementById('pag-pont-titulo').textContent='Recebimento - '+c.nome;
+  document.getElementById('pag-pont-valor').textContent=fmt(c.valor);
+  document.getElementById('pag-pont-data').value=new Date().toISOString().split('T')[0];
+  openModal('modal-pag-pontual');
+}
+function confirmarPagPontual(){
+  if(!_pagPontualId)return;
+  var clientes=JSON.parse(localStorage.getItem('ag_clientes')||'[]');
+  var c=clientes.filter(function(x){return x.id===_pagPontualId;})[0];if(!c)return;
+  var data=document.getElementById('pag-pont-data').value;
+  if(!data){alert('Informe a data');return;}
   var entradas=ls('entradas');
-  entradas.push({id:'pont_'+Date.now(),valor:c.valor,data:data,desc:'Recebimento - '+c.nome,pontual:true,clienteId:id});
+  entradas.push({id:'pont_'+Date.now(),valor:c.valor,data:data,desc:'Recebimento - '+c.nome,pontual:true,clienteId:_pagPontualId});
   lsSave('entradas',entradas);
+  closeModal('modal-pag-pontual');
+  _pagPontualId=null;
   render();renderClientesDireto();
 }
 
@@ -834,7 +853,7 @@ function renderFluxo(pagamentos,entradas,custos){
   var clientes=JSON.parse(localStorage.getItem('ag_clientes')||'[]');
   var itens=[];
   if(filtroFluxoTipo!=='saidas'){
-    pagamentos.filter(function(p){return inRangePag(p);}).forEach(function(p){var c=clientes.filter(function(x){return x.id===p.clienteId;})[0];itens.push({tipo:'in',subtipo:'pag',id:p.key,desc:'Mensalidade'+(c?' - '+c.nome:''),data:p.data,valor:p.valor,cat:'mensalidade'});});
+    pagamentos.filter(function(p){return inRangePag(p)&&!p.pontual;}).forEach(function(p){var c=clientes.filter(function(x){return x.id===p.clienteId;})[0];itens.push({tipo:'in',subtipo:'pag',id:p.key,desc:'Mensalidade'+(c?' - '+c.nome:''),data:p.data,valor:p.valor,cat:'mensalidade'});});
     entradas.filter(function(a){return inRange(a.data);}).forEach(function(a){itens.push({tipo:'in',subtipo:'entrada',id:a.id,desc:'Entrada'+(a.desc?' - '+a.desc:''),data:a.data,valor:a.valor,cat:'entrada'});});
   }
   if(filtroFluxoTipo!=='entradas'){
@@ -916,7 +935,7 @@ function render(){
   var clientes=JSON.parse(localStorage.getItem('ag_clientes')||'[]');
   var custos=ls('custos');var entradas=ls('entradas');var pagamentos=ls('pagamentos');
   var recorrentes=clientes.filter(function(c){return !c.encerrado&&(c.tipo||'recorrente')==='recorrente';});
-  var mrrR=pagamentos.filter(function(p){return inRangePag(p);}).reduce(function(s,p){return s+p.valor;},0);
+  var mrrR=pagamentos.filter(function(p){return inRangePag(p)&&!p.pontual;}).reduce(function(s,p){return s+p.valor;},0);
   var receitaPontual=entradas.filter(function(a){return inRange(a.data);}).reduce(function(s,a){return s+a.valor;},0);
   var fatTotal=mrrR+receitaPontual;
   var custosTotais=custos.filter(function(c){return c.tipo!=='avulso';}).reduce(function(s,c){
@@ -947,7 +966,7 @@ function render(){
   var variavel=custos.filter(function(c){return c.natureza==='variavel';}).reduce(function(s,c){return s+c.valor;},0);
   var total=fixo+variavel;var pF=total>0?Math.round(fixo/total*100):0;var pV=total>0?Math.round(variavel/total*100):0;
   document.getElementById('kpi-fat-total').textContent=fmt(fatTotal);
-  document.getElementById('kpi-fat-sub').textContent='MRR '+fmt(mrrR)+' + Pontual '+fmt(receitaPontual);
+  document.getElementById('kpi-fat-sub').textContent='MRR '+fmt(mrrR)+(receitaPontual>0?' + Pontual '+fmt(receitaPontual):'');
   document.getElementById('kpi-gasto').textContent=fmt(custosTotais);
   document.getElementById('kpi-saldo').textContent=fmt(saldoPeriodo);
   document.getElementById('kpi-investido').textContent=fmt(investidoPeriodo);
