@@ -1114,8 +1114,13 @@ function renderAnalise(deStr,ateStr){
   if(!meses.length)return;
   var pagamentos=ls('pagamentos');var entradas=ls('entradas');var custos=ls('custos');
   var labels=meses.map(function(x){return MESES[x.m]+(meses.length>6?'/'+String(x.y).slice(2):'');});
-  var dataMRR=meses.map(function(x){return pagamentos.filter(function(p){return p.mes===x.m&&p.ano===x.y;}).reduce(function(s,p){return s+p.valor;},0);});
-  var dataPontual=meses.map(function(x){return entradas.filter(function(a){if(!a.data)return false;var d=new Date(a.data+'T00:00:00');return d.getMonth()===x.m&&d.getFullYear()===x.y;}).reduce(function(s,a){return s+a.valor;},0);});
+  var dataMRR=meses.map(function(x){return pagamentos.filter(function(p){return p.mes===x.m&&p.ano===x.y&&!p.pontual;}).reduce(function(s,p){return s+p.valor;},0);});
+  var dataPontual=meses.map(function(x){return entradas.filter(function(a){
+    var dataRef=a.dataVenda||a.data;
+    if(!dataRef)return false;
+    var d=new Date(dataRef+'T00:00:00');
+    return d.getMonth()===x.m&&d.getFullYear()===x.y;
+  }).reduce(function(s,a){return s+a.valor;},0);});
   var dataFixo=meses.map(function(x){
     var total=0;
     custos.filter(function(c){return c.natureza!=='variavel'&&c.tipo!=='avulso';}).forEach(function(c){
