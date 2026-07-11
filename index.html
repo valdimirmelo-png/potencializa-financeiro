@@ -330,17 +330,17 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
   <input type="hidden" id="c-id">
   <div class="field"><label>Nome</label><input id="c-nome" type="text" placeholder="Dr. Joao Silva"></div>
   <div class="trow2">
-    <div class="field"><label>Tipo</label><select id="c-tipo"><option value="recorrente">Recorrente</option><option value="pontual">Pontual</option></select></div>
+    <div class="field"><label>Tipo</label><select id="c-tipo" onchange="toggleCamposCliente(this.value)"><option value="recorrente">Recorrente</option><option value="pontual">Pontual</option></select></div>
     <div class="field"><label>Categoria</label><select id="c-cat"></select></div>
   </div>
   <div class="field"><label>Servico contratado</label><input id="c-servico" type="text" placeholder="Ex: Gestao Google Ads"></div>
-  <div class="trow2">
-    <div class="field"><label>Valor (R$)</label><input id="c-valor" type="number" placeholder="1797"></div>
-    <div class="field"><label>Vencimento (dia)</label><input id="c-venc" type="number" placeholder="10" min="1" max="31"></div>
-  </div>
-  <div class="trow2">
+  <div class="field"><label>Valor (R$)</label><input id="c-valor" type="number" placeholder="1797"></div>
+  <div id="campos-recorrente">
+    <div class="trow2">
+      <div class="field"><label>Vencimento (dia)</label><input id="c-venc" type="number" placeholder="10" min="1" max="31"></div>
+      <div class="field"><label>Duracao (meses)</label><input id="c-dur" type="number" placeholder="6" min="1"></div>
+    </div>
     <div class="field"><label>Data de contratacao</label><input id="c-inicio" type="date"></div>
-    <div class="field"><label>Duracao (meses)</label><input id="c-dur" type="number" placeholder="6" min="1"></div>
   </div>
   <button class="sbtn" onclick="saveCliente()">Salvar cliente</button>
   <button class="sbtn sbtn-red" id="btn-del-cliente" style="display:none" onclick="deleteCliente()">Encerrar cliente</button>
@@ -671,8 +671,9 @@ function abrirMetaMovimento(tipo){
 function saveMetaMovimento(){var metaId=document.getElementById('meta-mov-id').value;var valor=parseFloat(document.getElementById('meta-mov-valor').value)||0;var data=document.getElementById('meta-mov-data').value;var desc=document.getElementById('meta-mov-desc').value.trim();if(!metaId||!valor){alert('Preencha os campos');return;}var movs=ls('meta_movs');movs.push({id:Date.now().toString(),metaId:metaId,tipo:metaMovTipo,valor:valor,data:data,desc:desc});lsSave('meta_movs',movs);closeModal('modal-meta-mov');render();}
 
 // CLIENTE
-function abrirNovoCliente(){document.getElementById('modal-cliente-title').textContent='Novo cliente';document.getElementById('c-id').value='';['c-nome','c-valor','c-venc','c-inicio','c-dur','c-servico'].forEach(function(id){document.getElementById(id).value='';});var tipoFiltro=document.getElementById('filtro-cl-tipo');document.getElementById('c-tipo').value=tipoFiltro&&tipoFiltro.value!=='todos'?tipoFiltro.value:'recorrente';buildCatClienteSelect('c-cat');document.getElementById('btn-del-cliente').style.display='none';openModal('modal-cliente');}
-function editarCliente(id){var clientes=JSON.parse(localStorage.getItem('ag_clientes')||'[]');var c=clientes.filter(function(x){return x.id===id;})[0];if(!c)return;document.getElementById('modal-cliente-title').textContent='Editar cliente';document.getElementById('c-id').value=c.id;document.getElementById('c-nome').value=c.nome;document.getElementById('c-servico').value=c.servico||'';document.getElementById('c-tipo').value=c.tipo||'recorrente';document.getElementById('c-valor').value=c.valor;document.getElementById('c-venc').value=c.vencimento||'';document.getElementById('c-inicio').value=c.inicio||'';document.getElementById('c-dur').value=c.duracao||'';buildCatClienteSelect('c-cat',c.cat||'');document.getElementById('btn-del-cliente').style.display='block';openModal('modal-cliente');}
+function toggleCamposCliente(tipo){var campos=document.getElementById('campos-recorrente');if(campos)campos.style.display=tipo==='pontual'?'none':'block';}
+function abrirNovoCliente(){document.getElementById('modal-cliente-title').textContent='Novo cliente';document.getElementById('c-id').value='';['c-nome','c-valor','c-venc','c-inicio','c-dur','c-servico'].forEach(function(id){document.getElementById(id).value='';});toggleCamposCliente('recorrente');document.getElementById('c-tipo').value='recorrente';var tipoFiltro=document.getElementById('filtro-cl-tipo');document.getElementById('c-tipo').value=tipoFiltro&&tipoFiltro.value!=='todos'?tipoFiltro.value:'recorrente';buildCatClienteSelect('c-cat');document.getElementById('btn-del-cliente').style.display='none';openModal('modal-cliente');}
+function editarCliente(id){var clientes=JSON.parse(localStorage.getItem('ag_clientes')||'[]');var c=clientes.filter(function(x){return x.id===id;})[0];if(!c)return;document.getElementById('modal-cliente-title').textContent='Editar cliente';document.getElementById('c-id').value=c.id;document.getElementById('c-nome').value=c.nome;document.getElementById('c-servico').value=c.servico||'';document.getElementById('c-tipo').value=c.tipo||'recorrente';toggleCamposCliente(c.tipo||'recorrente');document.getElementById('c-valor').value=c.valor;document.getElementById('c-venc').value=c.vencimento||'';document.getElementById('c-inicio').value=c.inicio||'';document.getElementById('c-dur').value=c.duracao||'';buildCatClienteSelect('c-cat',c.cat||'');document.getElementById('btn-del-cliente').style.display='block';openModal('modal-cliente');}
 function saveCliente(){var nome=document.getElementById('c-nome').value.trim();var servico=document.getElementById('c-servico').value.trim();var cat=document.getElementById('c-cat').value;var tipo=document.getElementById('c-tipo').value;var valor=parseFloat(document.getElementById('c-valor').value)||0;var venc=parseInt(document.getElementById('c-venc').value)||10;var inicio=document.getElementById('c-inicio').value;var dur=parseInt(document.getElementById('c-dur').value)||0;var id=document.getElementById('c-id').value;if(!nome||!valor){alert('Preencha nome e valor');return;}var clientes=JSON.parse(localStorage.getItem('ag_clientes')||'[]');if(id){for(var i=0;i<clientes.length;i++){if(clientes[i].id===id){clientes[i]=Object.assign({},clientes[i],{nome:nome,servico:servico,cat:cat,tipo:tipo,valor:valor,vencimento:venc,inicio:inicio,duracao:dur,encerrado:false});break;}}}else{clientes.push({id:Date.now().toString(),nome:nome,servico:servico,cat:cat,tipo:tipo,valor:valor,vencimento:venc,inicio:inicio,duracao:dur,encerrado:false});}localStorage.setItem('ag_clientes',JSON.stringify(clientes));syncUp();closeModal('modal-cliente');renderClientesDireto();render();}
 function deleteCliente(){var id=document.getElementById('c-id').value;if(!id||!confirm('Encerrar este cliente?'))return;var clientes=JSON.parse(localStorage.getItem('ag_clientes')||'[]');for(var i=0;i<clientes.length;i++){if(clientes[i].id===id){clientes[i].encerrado=true;break;}}localStorage.setItem('ag_clientes',JSON.stringify(clientes));syncUp();closeModal('modal-cliente');renderClientesDireto();render();}
 
@@ -767,12 +768,13 @@ function renderClientesDireto(){
     html+='<div class="item-name">'+c.nome+tipoBadge+encBadge+(cat?' <span style="font-size:9px;color:var(--muted);font-weight:400">'+cat.label+'</span>':'')+'</div>';
     html+='<div class="item-detail" style="margin-top:2px">'+(c.servico||'-')+'</div>';
     if(!c.encerrado)html+='<div class="item-detail" style="margin-top:2px;color:'+contratoColor+'">Contrato '+contratoText+(c.tipo!=='pontual'&&c.vencimento?' - Vence dia '+c.vencimento:'')+'</div>';
-    html+='<div class="item-detail" style="margin-top:3px">LTV <span style="font-family:JetBrains Mono,monospace;color:var(--green);font-weight:500">'+fmt(ltv)+'</span> - '+mesesAtivo+'m</div>';
+    if(c.tipo!=='pontual'){html+='<div class="item-detail" style="margin-top:3px">LTV <span style="font-family:JetBrains Mono,monospace;color:var(--green);font-weight:500">'+fmt(ltv)+'</span> - '+mesesAtivo+'m</div>';}
     html+='</div>';
     html+='<div class="item-right">';
     html+='<div class="item-val">'+fmt(c.valor)+'</div>';
     html+='<div class="item-actions" style="margin-top:6px">';
     html+='<button class="action-btn btn-edit" onclick="event.stopPropagation();editarCliente(this.dataset.id)" data-id="'+c.id+'">Editar</button>';
+    if(c.tipo==='pontual'&&!c.encerrado){html+='<button class="action-btn" style="background:rgba(0,230,118,0.12);color:var(--green)" onclick="event.stopPropagation();marcarPagoPontual(this.dataset.id)" data-id="'+c.id+'">Recebido</button>';}
     html+=renovarBtn;
     html+='</div></div></div>';
   });
@@ -788,6 +790,24 @@ function renderClientesDireto(){
   var concHtml='';
   sorted.forEach(function(c){var pct=Math.round(c.valor/mrrTodos*100);var risco=pct>=30;concHtml+='<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;font-weight:500;color:'+(risco?'var(--gold)':'var(--muted2)')+'">'+c.nome+(risco?' !':"")+'</span><span style="font-family:JetBrains Mono,monospace;font-size:11px;color:'+(risco?'var(--gold)':'var(--muted2)')+'">'+pct+'% - '+fmt(c.valor)+'</span></div><div style="height:8px;border-radius:99px;background:var(--s3);overflow:hidden"><div style="height:100%;width:'+pct+'%;border-radius:99px;background:'+(risco?'var(--gold)':'var(--green)')+'"></div></div></div>';});
   document.getElementById('concentracao-list').innerHTML=concHtml;
+}
+
+// MARCAR PAGO PONTUAL
+function marcarPagoPontual(id){
+  var clientes=JSON.parse(localStorage.getItem('ag_clientes')||'[]');
+  var c=clientes.filter(function(x){return x.id===id;})[0];if(!c)return;
+  var data=new Date().toISOString().split('T')[0];
+  // Registra pagamento vinculado ao cliente
+  var pags=ls('pagamentos');
+  var dataD=new Date(data+'T00:00:00');
+  var key=id+'_pont_'+Date.now();
+  pags.push({key:key,clienteId:id,valor:c.valor,data:data,mes:dataD.getMonth(),ano:dataD.getFullYear(),pontual:true});
+  lsSave('pagamentos',pags);
+  // Registra no fluxo como entrada pontual
+  var entradas=ls('entradas');
+  entradas.push({id:'pont_'+Date.now(),valor:c.valor,data:data,desc:'Recebimento - '+c.nome,pontual:true,clienteId:id});
+  lsSave('entradas',entradas);
+  render();renderClientesDireto();
 }
 
 // RENDER ALERTAS
@@ -838,7 +858,8 @@ function renderFluxo(pagamentos,entradas,custos){
     html+='<div class="flow-icon '+(i.tipo==='in'?'flow-in':'flow-out')+'">'+(catInfo?catInfo.icon:i.tipo==='in'?'+':'-')+'</div>';
     html+='<div class="flow-info"><div class="flow-desc">'+i.desc+'</div><div class="flow-date">'+(i.data?new Date(i.data+'T00:00:00').toLocaleDateString('pt-BR'):'')+'</div></div>';
     html+='<div class="flow-val '+(i.tipo)+'">'+(i.tipo==='in'?'+':'-')+fmt(i.valor)+'</div>';
-    html+='<div class="flow-actions"><button class="icon-btn" onclick="'+editFn+'">&#9999;</button></div>';
+    var delFn=i.subtipo==='pag'?"excluirLancamento('pag','"+i.id+"')":i.subtipo==='entrada'?"excluirLancamento('entrada','"+i.id+"')":'';
+    html+='<div class="flow-actions"><button class="icon-btn" onclick="'+editFn+'">&#9999;</button>'+(delFn?'<button class="icon-btn" style="color:var(--red)" onclick="'+delFn+'">&#10005;</button>':'')+'</div>';
     html+='</div>';
   });
   el.innerHTML=html;
@@ -939,6 +960,13 @@ function render(){
   renderMetas();
   renderReservaCard();
   renderCatsList();renderCatsClienteList();renderMetasConfig();
+}
+
+function excluirLancamento(subtipo,id){
+  if(!confirm('Excluir este lancamento?'))return;
+  if(subtipo==='pag'){lsSave('pagamentos',ls('pagamentos').filter(function(p){return p.key!==id;}));}
+  else if(subtipo==='entrada'){lsSave('entradas',ls('entradas').filter(function(a){return a.id!==id;}));}
+  render();
 }
 
 function renderReservaCard(){
