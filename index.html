@@ -967,7 +967,15 @@ function renderPizza(custos){
   canvas.onclick=function(e){var pts=pizzaChart.getElementsAtEventForMode(e,'nearest',{intersect:true},true);if(pts.length>0)showCatDetail(catKeys[pts[0].index],lista);};
 }
 function showCatDetail(catKey,lista){
-  var cats=getCats();var cat=cats[catKey]||{label:catKey,icon:'📦'};var itens=lista.filter(function(c){return c.cat===catKey;});var total=itens.reduce(function(s,c){return s+c.valor;},0);
+  var cats=getCats();var cat=cats[catKey]||{label:catKey,icon:'📦'};
+  // Deduplica por id do custo base para não mostrar o mesmo custo N vezes
+  var seen={};var itens=lista.filter(function(c){
+    if(c.cat!==catKey)return false;
+    var uid=c.custoId||c.id;
+    if(seen[uid])return false;
+    seen[uid]=true;return true;
+  });
+  var total=itens.reduce(function(s,c){return s+c.valor;},0);
   document.getElementById('cat-det-titulo').textContent=cat.icon+' '+cat.label;
   var html='';itens.forEach(function(c){html+='<div class="flow-item"><div class="flow-icon flow-out">'+cat.icon+'</div><div class="flow-info"><div class="flow-desc">'+c.desc+'</div><div class="flow-date">'+(c.natureza||'fixo')+' - '+c.tipo+'</div></div><div class="flow-val out">'+fmt(c.valor)+'</div></div>';});
   document.getElementById('cat-det-list').innerHTML=html;
