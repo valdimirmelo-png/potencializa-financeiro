@@ -467,7 +467,7 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
     <div style="font-size:10px;color:var(--muted);margin-bottom:4px">VALOR</div>
     <div style="font-family:JetBrains Mono,monospace;font-size:24px;font-weight:500;color:var(--green)" id="pag-pont-valor">R$ 0</div>
   </div>
-  <div class="field"><label>Data da venda</label><input id="pag-pont-venda" type="date"><div style="font-size:10px;color:var(--muted);margin-top:4px">Conta no faturamento deste mes</div></div>
+  <div class="field"><label>Data da venda</label><input id="pag-pont-venda" type="date" onchange="atualizarMesVenda()"><div style="font-size:10px;color:var(--muted);margin-top:4px" id="pag-pont-mes-venda">Conta no faturamento de...</div></div>
   <div class="field"><label>Data do recebimento</label><input id="pag-pont-data" type="date"><div style="font-size:10px;color:var(--muted);margin-top:4px">Quando o dinheiro entra na sua conta</div></div>
   <button class="sbtn" onclick="confirmarPagPontual()">Confirmar</button>
   <button class="secbtn" onclick="closeModal('modal-pag-pontual')">Cancelar</button>
@@ -815,15 +815,25 @@ function renderClientesDireto(){
 
 // MARCAR PAGO PONTUAL
 var _pagPontualId=null;
+var MESES_PT=['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+function atualizarMesVenda(){
+  var val=document.getElementById('pag-pont-venda').value;
+  var el=document.getElementById('pag-pont-mes-venda');
+  if(!el)return;
+  if(!val){el.textContent='Conta no faturamento do mes da venda';return;}
+  var d=new Date(val+'T00:00:00');
+  el.textContent='Conta no faturamento de '+MESES_PT[d.getMonth()]+'/'+d.getFullYear();
+}
 function marcarPagoPontual(id){
   _pagPontualId=id;
   var clientes=JSON.parse(localStorage.getItem('ag_clientes')||'[]');
   var c=clientes.filter(function(x){return x.id===id;})[0];if(!c)return;
-  document.getElementById('pag-pont-titulo').textContent=c.nome+' - '+c.servico;
+  document.getElementById('pag-pont-titulo').textContent=c.nome+(c.servico?' - '+c.servico:'');
   document.getElementById('pag-pont-valor').textContent=fmt(c.valor);
   var hoje=new Date().toISOString().split('T')[0];
   document.getElementById('pag-pont-venda').value=hoje;
   document.getElementById('pag-pont-data').value=hoje;
+  atualizarMesVenda();
   openModal('modal-pag-pontual');
 }
 function confirmarPagPontual(){
@@ -1004,11 +1014,12 @@ function render(){
   var entradasCaixa=pagamentos.filter(function(p){return inRangePag(p)&&!p.pontual;}).reduce(function(s,p){return s+p.valor;},0)+
     entradas.filter(function(a){var d=a.dataRecebimento||a.data;return inRange(d);}).reduce(function(s,a){return s+a.valor;},0);
   var saldoCaixa=entradasCaixa-custosTotais-investidoPeriodo;
+  var hoje=new Date();
   var naoRecebido=entradas.filter(function(a){
     if(!a.pontual)return false;
     var dVenda=a.dataVenda||a.data;
-    var dReceb=a.dataRecebimento||a.data;
-    return inRange(dVenda)&&!inRange(dReceb);
+    var dReceb=a.dataRecebimento?new Date(a.dataRecebimento+'T00:00:00'):null;
+    return inRange(dVenda)&&dReceb&&dReceb>hoje;
   }).reduce(function(s,a){return s+a.valor;},0);
   document.getElementById('kpi-saldo').textContent=fmt(saldoCaixa);
   document.getElementById('cx-entradas').textContent=fmt(entradasCaixa);
