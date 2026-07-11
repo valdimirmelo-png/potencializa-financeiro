@@ -127,40 +127,19 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
 <!-- PAINEL -->
 <div class="page active" id="pg-painel">
   <div id="alertas-wrap"></div>
-  <!-- DRE -->
-  <div class="card" style="margin-bottom:10px">
-    <div class="sec-title">Resultado do periodo</div>
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-      <div>
-        <div style="font-size:12px;font-weight:500;color:var(--text)">Faturamento</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:2px" id="kpi-fat-sub">MRR + Pontual</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-family:JetBrains Mono,monospace;font-size:18px;font-weight:500;color:var(--green)" id="kpi-fat-total">R$ 0</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:2px">MRR <span id="dre-mrr">R$ 0</span> + Pontual <span id="dre-pontual">R$ 0</span></div>
-      </div>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:12px;font-weight:500;color:var(--text)">Custos</div>
-      <div style="font-family:JetBrains Mono,monospace;font-size:18px;font-weight:500;color:var(--red)" id="kpi-gasto">R$ 0</div>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 2px">
-      <div style="font-size:13px;font-weight:600;color:var(--text)">Resultado</div>
-      <div style="font-family:JetBrains Mono,monospace;font-size:20px;font-weight:600;color:var(--green)" id="kpi-resultado">R$ 0</div>
-    </div>
-  </div>
-  <!-- CAIXA -->
   <div class="kpi-grid">
-    <div class="kpi kpi-full" style="background:var(--s2);border:1px solid var(--border2)">
-      <div class="kpi-lbl">Saldo disponivel em caixa</div>
+    <div class="kpi"><div class="kpi-lbl">Faturamento</div><div class="kpi-val" style="color:var(--green)" id="kpi-fat-total">R$ 0</div><div class="kpi-sub" id="kpi-fat-sub"></div></div>
+    <div class="kpi"><div class="kpi-lbl">Custos</div><div class="kpi-val" style="color:var(--red)" id="kpi-gasto">R$ 0</div></div>
+    <div class="kpi kpi-full" style="border:1px solid var(--border2)">
+      <div class="kpi-lbl">Saldo disponivel</div>
       <div class="kpi-val" style="color:var(--green);font-size:22px" id="kpi-saldo">R$ 0</div>
       <div style="display:flex;justify-content:space-between;margin-top:8px">
-        <div><div style="font-size:9px;color:var(--muted)">ENTRADAS</div><div style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--green)" id="cx-entradas">R$ 0</div></div>
-        <div style="text-align:right"><div style="font-size:9px;color:var(--muted)">SAIDAS</div><div style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--red)" id="cx-saidas">R$ 0</div></div>
+        <div><div style="font-size:9px;color:var(--muted)">ENTRADAS</div><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--green)" id="cx-entradas">R$ 0</div></div>
+        <div style="text-align:right"><div style="font-size:9px;color:var(--muted)">SAIDAS</div><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--red)" id="cx-saidas">R$ 0</div></div>
       </div>
     </div>
-    <div class="kpi"><div class="kpi-lbl">Investido</div><div class="kpi-val" style="color:var(--blue)" id="kpi-investido">R$ 0</div></div>
     <div class="kpi"><div class="kpi-lbl">Nao recebido</div><div class="kpi-val" style="color:var(--gold)" id="kpi-nao-recebido">R$ 0</div><div class="kpi-sub">vendas pendentes</div></div>
+    <div class="kpi"><div class="kpi-lbl">Investido</div><div class="kpi-val" style="color:var(--blue)" id="kpi-investido">R$ 0</div><div class="kpi-sub">no periodo</div></div>
   </div>
   <div class="card" style="margin-bottom:10px">
     <div class="sec-title">Fixo vs Variavel</div>
@@ -1018,20 +997,13 @@ function render(){
   var fixo=custos.filter(function(c){return c.natureza!=='variavel'&&c.tipo!=='avulso';}).reduce(function(s,c){return s+c.valor;},0);
   var variavel=custos.filter(function(c){return c.natureza==='variavel';}).reduce(function(s,c){return s+c.valor;},0);
   var total=fixo+variavel;var pF=total>0?Math.round(fixo/total*100):0;var pV=total>0?Math.round(variavel/total*100):0;
-  // DRE - usa competencia (data da venda)
-  var resultado=fatTotal-custosTotais;
   document.getElementById('kpi-fat-total').textContent=fmt(fatTotal);
-  document.getElementById('dre-mrr').textContent=fmt(mrrR);
-  document.getElementById('dre-pontual').textContent=fmt(receitaPontual);
+  document.getElementById('kpi-fat-sub').textContent=receitaPontual>0?'MRR '+fmt(mrrR)+' + Pontual '+fmt(receitaPontual):'MRR '+fmt(mrrR);
   document.getElementById('kpi-gasto').textContent=fmt(custosTotais);
-  document.getElementById('kpi-resultado').textContent=fmt(resultado);
-  if(document.getElementById('kpi-resultado'))document.getElementById('kpi-resultado').style.color=resultado>=0?'var(--green)':'var(--red)';
-  // CAIXA - usa data de recebimento real
+  // CAIXA
   var entradasCaixa=pagamentos.filter(function(p){return inRangePag(p)&&!p.pontual;}).reduce(function(s,p){return s+p.valor;},0)+
     entradas.filter(function(a){var d=a.dataRecebimento||a.data;return inRange(d);}).reduce(function(s,a){return s+a.valor;},0);
-  var saidaCaixa=custosTotais;
-  var saldoCaixa=entradasCaixa-saidaCaixa-investidoPeriodo;
-  // Nao recebido = vendas pontuais com data de recebimento fora do periodo
+  var saldoCaixa=entradasCaixa-custosTotais-investidoPeriodo;
   var naoRecebido=entradas.filter(function(a){
     if(!a.pontual)return false;
     var dVenda=a.dataVenda||a.data;
@@ -1040,7 +1012,7 @@ function render(){
   }).reduce(function(s,a){return s+a.valor;},0);
   document.getElementById('kpi-saldo').textContent=fmt(saldoCaixa);
   document.getElementById('cx-entradas').textContent=fmt(entradasCaixa);
-  document.getElementById('cx-saidas').textContent=fmt(saidaCaixa);
+  document.getElementById('cx-saidas').textContent=fmt(custosTotais);
   document.getElementById('kpi-investido').textContent=fmt(investidoPeriodo);
   document.getElementById('kpi-nao-recebido').textContent=fmt(naoRecebido);
   document.getElementById('fv-fixo-pct').textContent=pF+'%';document.getElementById('fv-var-pct').textContent=pV+'%';
