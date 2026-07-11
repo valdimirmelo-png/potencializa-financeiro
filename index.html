@@ -855,13 +855,16 @@ function confirmarPagPontual(){
 }
 
 // RENDER ALERTAS
-function confirmarRecebimento(entradaId){
+function confirmarRecebimento(btn){
+  var entradaId=btn.dataset?btn.dataset.id:btn;
   if(!confirm('Confirmar que este valor foi recebido?'))return;
-  // The entry already exists - just mark as received today
   var entradas=ls('entradas');
+  var hoje=new Date().toISOString().split('T')[0];
   for(var i=0;i<entradas.length;i++){
     if(entradas[i].id===entradaId){
-      entradas[i].dataRecebimento=new Date().toISOString().split('T')[0];
+      // Mark as received today - data de recebimento = hoje
+      entradas[i].dataRecebimento=hoje;
+      entradas[i].recebidoConfirmado=true;
       break;
     }
   }
@@ -874,7 +877,7 @@ function renderAlertas(clientes,pagamentos){
   // Alertas de recebimento pendente
   var hoje2=new Date();hoje2.setHours(0,0,0,0);
   ls('entradas').filter(function(a){
-    if(!a.pontual||!a.dataRecebimento)return false;
+    if(!a.pontual||!a.dataRecebimento||a.recebidoConfirmado)return false;
     var dReceb=new Date(a.dataRecebimento+'T00:00:00');
     return dReceb<=hoje2;
   }).forEach(function(a){
@@ -886,7 +889,7 @@ function renderAlertas(clientes,pagamentos){
     if(alertDesc)alertHtml+=' - '+alertDesc;
     if(descVenda)alertHtml+=' (venda '+descVenda+')';
     alertHtml+='</span>';
-    alertHtml+='<button onclick="confirmarRecebimento(this.dataset.id)" data-id="'+a.id+'" style="background:var(--blue);border:none;border-radius:8px;padding:4px 12px;font-size:10px;font-weight:600;color:#0D3330;cursor:pointer;flex-shrink:0;font-family:Poppins,sans-serif">Confirmar</button>';
+    alertHtml+='<button onclick="confirmarRecebimento(this)" data-id="'+a.id+'" style="background:var(--blue);border:none;border-radius:8px;padding:4px 12px;font-size:10px;font-weight:600;color:#0D3330;cursor:pointer;flex-shrink:0;font-family:Poppins,sans-serif">Confirmar</button>';
     alertHtml+='</div>';
     wrap.innerHTML+=alertHtml;
   });
