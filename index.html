@@ -853,29 +853,32 @@ function renderClientesDireto(){
   var card=document.getElementById('card-concentracao');
   // Concentracao: recorrentes ativos + pontuais com entrada no periodo filtrado
   var entradas=ls('entradas');
+  var pags=ls('pagamentos');
+  // helper: valor pontual no periodo (entradas com clienteId OU pagamentos com clienteId no range)
+  function valorPontualPeriodo(c){
+    var v1=entradas.filter(function(a){return a.clienteId===c.id&&inRange(a.dataVenda||a.data);}).reduce(function(s,a){return s+a.valor;},0);
+    var v2=pags.filter(function(p){return p.clienteId===c.id&&inRange(p.data);}).reduce(function(s,p){return s+p.valor;},0);
+    return v1+v2;
+  }
   var recorrentesConc=filtrados.filter(function(c){return !c.encerrado&&(c.tipo||'recorrente')==='recorrente';});
   var pontuaisConc=filtrados.filter(function(c){return !c.encerrado&&c.tipo==='pontual';}).filter(function(c){
-    // so conta pontual se tem entrada (venda) no periodo filtrado
-    return entradas.some(function(a){return a.clienteId===c.id&&inRange(a.dataVenda||a.data);});
+    return valorPontualPeriodo(c)>0;
   });
   var concClientes=recorrentesConc.concat(pontuaisConc);
   var mrrTodos=concClientes.reduce(function(s,c){
-    if(c.tipo==='pontual'){
-      // usa valor real da entrada no periodo
-      return s+entradas.filter(function(a){return a.clienteId===c.id&&inRange(a.dataVenda||a.data);}).reduce(function(ss,a){return ss+a.valor;},0);
-    }
+    if(c.tipo==='pontual')return s+valorPontualPeriodo(c);
     return s+c.valor;
   },0);
   if(!mrrTodos||statusFiltro==='encerrado'){card.style.display='none';return;}
   card.style.display='block';
   var sorted=concClientes.slice().sort(function(a,b){
-    var va=a.tipo==='pontual'?entradas.filter(function(x){return x.clienteId===a.id&&inRange(x.dataVenda||x.data);}).reduce(function(s,x){return s+x.valor;},0):a.valor;
-    var vb=b.tipo==='pontual'?entradas.filter(function(x){return x.clienteId===b.id&&inRange(x.dataVenda||x.data);}).reduce(function(s,x){return s+x.valor;},0):b.valor;
+    var va=a.tipo==='pontual'?valorPontualPeriodo(a):a.valor;
+    var vb=b.tipo==='pontual'?valorPontualPeriodo(b):b.valor;
     return vb-va;
   });
   var concHtml='';
   sorted.forEach(function(c){
-    var val=c.tipo==='pontual'?entradas.filter(function(a){return a.clienteId===c.id&&inRange(a.dataVenda||a.data);}).reduce(function(s,a){return s+a.valor;},0):c.valor;
+    var val=c.tipo==='pontual'?valorPontualPeriodo(c):c.valor;
     var pct=Math.round(val/mrrTodos*100);var risco=pct>=30;
     concHtml+='<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;font-weight:500;color:'+(risco?'var(--gold)':'var(--muted2)')+'">'+c.nome+(risco?' !':"")+'</span><span style="font-family:JetBrains Mono,monospace;font-size:11px;color:'+(risco?'var(--gold)':'var(--muted2)')+'">'+pct+'% - '+fmt(val)+'</span></div><div style="height:8px;border-radius:99px;background:var(--s3);overflow:hidden"><div style="height:100%;width:'+pct+'%;border-radius:99px;background:'+(risco?'var(--gold)':'var(--green)')+'"></div></div></div>';
   });
