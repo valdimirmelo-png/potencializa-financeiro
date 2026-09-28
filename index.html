@@ -134,6 +134,18 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
     <div class="kpi"><div class="kpi-lbl">A receber</div><div class="kpi-val" style="color:var(--gold)" id="kpi-nao-recebido">R$ 0</div></div>
     <div class="kpi"><div class="kpi-lbl">Investido no periodo</div><div class="kpi-val" style="color:var(--blue)" id="kpi-investido">R$ 0</div></div>
   </div>
+  <div id="fatura-cartao-wrap" style="display:none;margin-bottom:10px">
+    <div style="background:rgba(255,82,82,0.08);border:1px solid rgba(255,82,82,0.3);border-radius:12px;padding:12px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div>
+          <div style="font-size:9px;color:rgba(255,82,82,0.8);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;margin-bottom:2px">Fatura do Cartao em aberto</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:500;color:var(--red)" id="kpi-fatura-cartao">R$ 0</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px" id="kpi-fatura-sub">custos pendentes no cartao</div>
+        </div>
+        <button onclick="pagarFaturaCartao()" style="background:rgba(255,82,82,0.15);border:1px solid rgba(255,82,82,0.4);border-radius:10px;padding:8px 14px;color:var(--red);font-family:Poppins,sans-serif;font-size:11px;font-weight:600;cursor:pointer;flex-shrink:0">Pagar fatura</button>
+      </div>
+    </div>
+  </div>
   <div class="card" style="margin-bottom:10px">
     <div class="sec-title">Fixo vs Variavel</div>
     <div style="display:flex;justify-content:space-between;margin-bottom:6px">
@@ -357,6 +369,21 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
   </div>
   <div class="field"><label>Data</label><input id="cu-data" type="date"></div>
   <div id="parcelas-field" style="display:none" class="field"><label>Numero de parcelas</label><input id="cu-parcelas" type="number" placeholder="12" min="2"></div>
+  <div class="trow2">
+    <div class="field"><label>Forma de pagamento</label>
+      <select id="cu-forma" onchange="toggleStatusPagto(this.value)">
+        <option value="cartao">Cartao de credito</option>
+        <option value="outro">Outro (debito/Pix/boleto)</option>
+      </select>
+    </div>
+    <div class="field" id="status-pagto-field">
+      <label>Status</label>
+      <select id="cu-status-pagto">
+        <option value="pendente">Pendente</option>
+        <option value="pago">Pago</option>
+      </select>
+    </div>
+  </div>
   <button class="sbtn" onclick="saveCusto()">Salvar custo</button>
   <button class="sbtn sbtn-red" id="btn-del-custo" style="display:none" onclick="deleteCusto()">Excluir custo</button>
   <button class="secbtn" onclick="closeModal('modal-custo')">Cancelar</button>
@@ -694,9 +721,19 @@ function saveCliente(){var nome=document.getElementById('c-nome').value.trim();v
 function deleteCliente(){var id=document.getElementById('c-id').value;if(!id||!confirm('Encerrar este cliente?'))return;var clientes=JSON.parse(localStorage.getItem('ag_clientes')||'[]');for(var i=0;i<clientes.length;i++){if(clientes[i].id===id){clientes[i].encerrado=true;break;}}localStorage.setItem('ag_clientes',JSON.stringify(clientes));syncUp();closeModal('modal-cliente');renderClientesDireto();render();}
 
 // CUSTO
-function abrirNovoCusto(){document.getElementById('modal-custo-title').textContent='Novo custo';document.getElementById('cu-id').value='';['cu-desc','cu-valor','cu-parcelas','cu-data'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('cu-tipo').value='fixo';document.getElementById('cu-natureza').value='fixo';document.getElementById('parcelas-field').style.display='none';document.getElementById('btn-del-custo').style.display='none';buildCatSelect('cu-cat');openModal('modal-custo');}
-function editarCusto(id){var c=ls('custos').filter(function(x){return x.id===id;})[0];if(!c)return;document.getElementById('modal-custo-title').textContent='Editar custo';document.getElementById('cu-id').value=c.id;document.getElementById('cu-desc').value=c.desc;document.getElementById('cu-valor').value=c.valor;document.getElementById('cu-tipo').value=c.tipo;document.getElementById('cu-natureza').value=c.natureza||'fixo';document.getElementById('cu-parcelas').value=c.parcelas||'';document.getElementById('cu-data').value=c.data||'';document.getElementById('parcelas-field').style.display=c.tipo==='parcelado'?'block':'none';document.getElementById('btn-del-custo').style.display='block';buildCatSelect('cu-cat',c.cat);openModal('modal-custo');}
-function saveCusto(){var desc=document.getElementById('cu-desc').value.trim();var valorTotal=parseFloat(document.getElementById('cu-valor').value)||0;var cat=document.getElementById('cu-cat').value;var tipo=document.getElementById('cu-tipo').value;var natureza=document.getElementById('cu-natureza').value;var np=parseInt(document.getElementById('cu-parcelas').value)||1;var data=document.getElementById('cu-data').value||new Date().toISOString().split('T')[0];var id=document.getElementById('cu-id').value;if(!desc||!valorTotal){alert('Preencha descricao e valor');return;}var valorP=tipo==='parcelado'?Math.round(valorTotal/np*100)/100:valorTotal;var custos=ls('custos');if(id){for(var i=0;i<custos.length;i++){if(custos[i].id===id){custos[i]=Object.assign({},custos[i],{desc:desc,valor:valorP,valorTotal:valorTotal,cat:cat,tipo:tipo,natureza:natureza,parcelas:np,data:data});break;}}}else{custos.push({id:Date.now().toString(),desc:desc,valor:valorP,valorTotal:valorTotal,cat:cat,tipo:tipo,natureza:natureza,parcelas:np,data:data});}lsSave('custos',custos);closeModal('modal-custo');render();}
+function toggleStatusPagto(forma){var f=document.getElementById('status-pagto-field');if(f)f.style.display=(forma==='cartao')?'':'none';}
+function abrirNovoCusto(){document.getElementById('modal-custo-title').textContent='Novo custo';document.getElementById('cu-id').value='';['cu-desc','cu-valor','cu-parcelas','cu-data'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('cu-tipo').value='fixo';document.getElementById('cu-natureza').value='fixo';document.getElementById('parcelas-field').style.display='none';document.getElementById('btn-del-custo').style.display='none';document.getElementById('cu-forma').value='outro';document.getElementById('cu-status-pagto').value='pago';toggleStatusPagto('outro');buildCatSelect('cu-cat');openModal('modal-custo');}
+function editarCusto(id){var c=ls('custos').filter(function(x){return x.id===id;})[0];if(!c)return;document.getElementById('modal-custo-title').textContent='Editar custo';document.getElementById('cu-id').value=c.id;document.getElementById('cu-desc').value=c.desc;document.getElementById('cu-valor').value=c.valor;document.getElementById('cu-tipo').value=c.tipo;document.getElementById('cu-natureza').value=c.natureza||'fixo';document.getElementById('cu-parcelas').value=c.parcelas||'';document.getElementById('cu-data').value=c.data||'';document.getElementById('parcelas-field').style.display=c.tipo==='parcelado'?'block':'none';var forma=c.forma||'outro';document.getElementById('cu-forma').value=forma;document.getElementById('cu-status-pagto').value=c.statusPagto||(forma==='cartao'?'pendente':'pago');toggleStatusPagto(forma);document.getElementById('btn-del-custo').style.display='block';buildCatSelect('cu-cat',c.cat);openModal('modal-custo');}
+function saveCusto(){var desc=document.getElementById('cu-desc').value.trim();var valorTotal=parseFloat(document.getElementById('cu-valor').value)||0;var cat=document.getElementById('cu-cat').value;var tipo=document.getElementById('cu-tipo').value;var natureza=document.getElementById('cu-natureza').value;var np=parseInt(document.getElementById('cu-parcelas').value)||1;var data=document.getElementById('cu-data').value||new Date().toISOString().split('T')[0];var id=document.getElementById('cu-id').value;var forma=document.getElementById('cu-forma').value;var statusPagto=forma==='cartao'?document.getElementById('cu-status-pagto').value:'pago';if(!desc||!valorTotal){alert('Preencha descricao e valor');return;}var valorP=tipo==='parcelado'?Math.round(valorTotal/np*100)/100:valorTotal;var custos=ls('custos');if(id){for(var i=0;i<custos.length;i++){if(custos[i].id===id){custos[i]=Object.assign({},custos[i],{desc:desc,valor:valorP,valorTotal:valorTotal,cat:cat,tipo:tipo,natureza:natureza,parcelas:np,data:data,forma:forma,statusPagto:statusPagto});break;}}}else{custos.push({id:Date.now().toString(),desc:desc,valor:valorP,valorTotal:valorTotal,cat:cat,tipo:tipo,natureza:natureza,parcelas:np,data:data,forma:forma,statusPagto:statusPagto});}lsSave('custos',custos);closeModal('modal-custo');render();}
+function pagarFaturaCartao(){
+  var hoje=new Date().toISOString().split('T')[0];
+  var custos=ls('custos');
+  var pagou=0;
+  custos.forEach(function(c){if((c.forma||'outro')==='cartao'&&c.statusPagto==='pendente'&&c.data&&c.data<=hoje){c.statusPagto='pago';pagou++;}});
+  if(!pagou){alert('Nenhuma fatura pendente para pagar.');return;}
+  lsSave('custos',custos);
+  render();
+}
 function deleteCusto(){var id=document.getElementById('cu-id').value;if(!id||!confirm('Excluir?'))return;lsSave('custos',ls('custos').filter(function(x){return x.id!==id;}));closeModal('modal-custo');render();}
 
 // ENTRADA
@@ -945,7 +982,7 @@ function renderFluxo(pagamentos,entradas,custos){
     var r=getFiltroRange();
     custos.forEach(function(c){
       if(c.tipo==='avulso'){if(inRange(c.data))itens.push({tipo:'out',subtipo:'custo',id:c.id,desc:c.desc,data:c.data,valor:c.valor,cat:c.cat,custoId:c.id,avulso:true});}
-      else{var diaRef=c.data?new Date(c.data+'T00:00:00').getDate():5;var inicioMes=new Date(0);if(c.data){var dp=c.data.split('-');inicioMes=new Date(parseInt(dp[0]),parseInt(dp[1])-1,1);}var cur=new Date(r.de.getFullYear(),r.de.getMonth(),1);while(cur<=r.ate){if(cur>=inicioMes){var mesKey=c.id+'_'+cur.getMonth()+'_'+cur.getFullYear();var overrides=ls('custos_overrides');var ov=overrides.filter(function(x){return x.key===mesKey;})[0];var valorMes=ov?ov.valor:c.valor;var dataStr=ov?ov.data:cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(diaRef).padStart(2,'0');itens.push({tipo:'out',subtipo:'custo',id:mesKey,desc:c.desc+(c.tipo==='parcelado'?' (parcela)':'')+(ov?' *':''),data:dataStr,valor:valorMes,cat:c.cat,custoId:c.id,mesKey:mesKey});}cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);}}
+      else{var diaRef=c.data?new Date(c.data+'T00:00:00').getDate():5;var inicioMes=new Date(0);if(c.data){var dp=c.data.split('-');inicioMes=new Date(parseInt(dp[0]),parseInt(dp[1])-1,1);}var hojeFluxo=new Date().toISOString().split('T')[0];var cur=new Date(r.de.getFullYear(),r.de.getMonth(),1);while(cur<=r.ate){if(cur>=inicioMes){var mesKey=c.id+'_'+cur.getMonth()+'_'+cur.getFullYear();var ovList=ls('custos_overrides');var ov=ovList.filter(function(x){return x.key===mesKey;})[0];var valorMes=ov?ov.valor:c.valor;var dataStr=ov?ov.data:cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(diaRef).padStart(2,'0');var formaC=c.forma||'outro';var statusC=c.statusPagto||(formaC==='cartao'?'pendente':'pago');var labelExtra=c.tipo==='parcelado'?' (parcela)':'';if(ov)labelExtra+=' *';if(formaC==='cartao')labelExtra+=(statusC==='pendente'?' 💳⏳':' 💳✓');itens.push({tipo:'out',subtipo:'custo',id:mesKey,desc:c.desc+labelExtra,data:dataStr,valor:valorMes,cat:c.cat,custoId:c.id,mesKey:mesKey,forma:formaC,statusPagto:statusC});}cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);}}
     });
   }
   var cats=getCats();
@@ -1042,26 +1079,48 @@ function render(){
     return inRange(dataRef);
   }).reduce(function(s,a){return s+a.valor;},0);
   var fatTotal=mrrR+receitaPontual;
-  var custosTotais=custos.filter(function(c){return c.tipo!=='avulso';}).reduce(function(s,c){
-    if(!c.data)return s+c.valor;
+  var hojeStr=new Date().toISOString().split('T')[0];
+  var overrides=ls('custos_overrides');
+  // Calcula custos separando cartao pendente (fatura) de custos que entram no caixa
+  var custosCaixaTotais=0;
+  var faturaCartaoTotal=0;
+  // Avulsos: data <= hoje para contar no caixa
+  custos.filter(function(c){return c.tipo==='avulso';}).forEach(function(c){
+    if(!c.data||!inRange(c.data)||c.data>hojeStr)return;
+    var forma=c.forma||'outro';
+    var statusPagto=c.statusPagto||(forma==='cartao'?'pendente':'pago');
+    if(forma==='cartao'&&statusPagto==='pendente'){faturaCartaoTotal+=c.valor;}
+    else{custosCaixaTotais+=c.valor;}
+  });
+  // Fixos e parcelados: respeita data de inicio, data <= hoje para caixa
+  custos.filter(function(c){return c.tipo!=='avulso';}).forEach(function(c){
+    if(!c.data)return;
     var partes=c.data.split('-');
     var inicioMes=new Date(parseInt(partes[0]),parseInt(partes[1])-1,1);
     var r=getFiltroRange();
     var filtroMesInicio=new Date(r.de.getFullYear(),r.de.getMonth(),1);
     var filtroMesFim=new Date(r.ate.getFullYear(),r.ate.getMonth(),1);
-    if(inicioMes>filtroMesFim)return s;
-    var mesesValidos=0;
+    if(inicioMes>filtroMesFim)return;
     var cur=new Date(filtroMesInicio.getFullYear(),filtroMesInicio.getMonth(),1);
     while(cur<=filtroMesFim){
       if(cur>=inicioMes){
         var mesKey=c.id+'_'+cur.getMonth()+'_'+cur.getFullYear();
-        var ov=ls('custos_overrides').filter(function(x){return x.key===mesKey;})[0];
-        mesesValidos+=(ov?ov.valor:c.valor);
+        var ov=overrides.filter(function(x){return x.key===mesKey;})[0];
+        var valorMes=ov?ov.valor:c.valor;
+        // data de referencia deste lancamento
+        var diaRef=c.data?new Date(c.data+'T00:00:00').getDate():5;
+        var dataRef=ov&&ov.data?ov.data:cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(diaRef).padStart(2,'0');
+        if(dataRef>hojeStr){cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);continue;}
+        var forma=c.forma||'outro';
+        // Para fixos de cartao, usa statusPagto do custo base (pode ser pendente ou pago)
+        var statusPagto=c.statusPagto||(forma==='cartao'?'pendente':'pago');
+        if(forma==='cartao'&&statusPagto==='pendente'){faturaCartaoTotal+=valorMes;}
+        else{custosCaixaTotais+=valorMes;}
       }
       cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);
     }
-    return s+mesesValidos;
-  },0);
+  });
+  var custosTotais=custosCaixaTotais+faturaCartaoTotal;
   var totalEntradas=mrrR+receitaPontual;
   var reservaPeriodo=ls('reserva_movs').filter(function(m){return inRange(m.data);}).reduce(function(s,m){return m.tipo==='aporte'?s+m.valor:s-m.valor;},0);
   var saldoPeriodo=totalEntradas-custosTotais-reservaPeriodo;
@@ -1071,11 +1130,11 @@ function render(){
   var total=fixo+variavel;var pF=total>0?Math.round(fixo/total*100):0;var pV=total>0?Math.round(variavel/total*100):0;
   document.getElementById('kpi-fat-total').textContent=fmt(fatTotal);
   document.getElementById('kpi-fat-sub').textContent=receitaPontual>0?'MRR '+fmt(mrrR)+' + Pontual '+fmt(receitaPontual):'MRR '+fmt(mrrR);
-  document.getElementById('kpi-gasto').textContent=fmt(custosTotais);
-  // CAIXA
+  document.getElementById('kpi-gasto').textContent=fmt(custosCaixaTotais);
+  // CAIXA: custosCaixaTotais (exclui cartao pendente; fatura fica separada)
   var entradasCaixa=pagamentos.filter(function(p){return inRangePag(p)&&!p.pontual;}).reduce(function(s,p){return s+p.valor;},0)+
     entradas.filter(function(a){var d=a.dataRecebimento||a.data;return inRange(d);}).reduce(function(s,a){return s+a.valor;},0);
-  var saldoCaixa=entradasCaixa-custosTotais-investidoPeriodo;
+  var saldoCaixa=entradasCaixa-custosCaixaTotais-investidoPeriodo;
   var hoje=new Date();
   var naoRecebido=entradas.filter(function(a){
     if(!a.pontual)return false;
@@ -1086,6 +1145,16 @@ function render(){
   document.getElementById('kpi-saldo').textContent=fmt(saldoCaixa);
   document.getElementById('kpi-investido').textContent=fmt(investidoPeriodo);
   document.getElementById('kpi-nao-recebido').textContent=fmt(naoRecebido);
+  // FATURA CARTAO
+  var faturaWrap=document.getElementById('fatura-cartao-wrap');
+  if(faturaWrap){
+    if(faturaCartaoTotal>0){
+      faturaWrap.style.display='block';
+      document.getElementById('kpi-fatura-cartao').textContent=fmt(faturaCartaoTotal);
+    } else {
+      faturaWrap.style.display='none';
+    }
+  }
   document.getElementById('fv-fixo-pct').textContent=pF+'%';document.getElementById('fv-var-pct').textContent=pV+'%';
   document.getElementById('fv-bar-fixo').style.width=pF+'%';document.getElementById('fv-bar-var').style.width=pV+'%';
   document.getElementById('fv-fixo-val').textContent=fmt(fixo);document.getElementById('fv-var-val').textContent=fmt(variavel);
@@ -1194,8 +1263,8 @@ window.addEventListener('DOMContentLoaded',function(){
   document.getElementById('pg-data').value=hojStr;
   document.getElementById('meta-mov-data').value=hojStr;
   var deA=new Date(hoje.getFullYear(),hoje.getMonth()-2,1);
-  document.getElementById('an-ate').value=hojStr;
-  document.getElementById('an-de').value=deA.toISOString().split('T')[0];
+  if(document.getElementById('an-ate'))document.getElementById('an-ate').value=hojStr;
+  if(document.getElementById('an-de'))document.getElementById('an-de').value=deA.toISOString().split('T')[0];
   initCicloBtn();
   if(saved){
     currentCode=saved;
