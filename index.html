@@ -130,7 +130,7 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
   <div class="kpi-grid">
     <div class="kpi"><div class="kpi-lbl">Faturamento</div><div class="kpi-val" style="color:var(--green)" id="kpi-fat-total">R$ 0</div><div class="kpi-sub" id="kpi-fat-sub"></div></div>
     <div class="kpi"><div class="kpi-lbl">Custos</div><div class="kpi-val" style="color:var(--red)" id="kpi-gasto">R$ 0</div></div>
-    <div class="kpi"><div class="kpi-lbl">Saldo do caixa</div><div class="kpi-val" style="color:var(--green)" id="kpi-saldo">R$ 0</div></div>
+    <div class="kpi"><div class="kpi-lbl">Saldo do caixa</div><div class="kpi-val" style="color:var(--green)" id="kpi-saldo">R$ 0</div><div style="font-size:9px;margin-top:2px" id="kpi-saldo-sub"></div></div>
     <div class="kpi"><div class="kpi-lbl">A receber</div><div class="kpi-val" style="color:var(--gold)" id="kpi-nao-recebido">R$ 0</div></div>
     <div class="kpi"><div class="kpi-lbl">Investido no periodo</div><div class="kpi-val" style="color:var(--blue)" id="kpi-investido">R$ 0</div></div>
   </div>
@@ -143,6 +143,34 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
           <div style="font-size:10px;color:var(--muted);margin-top:2px" id="kpi-fatura-sub">custos pendentes no cartao</div>
         </div>
         <button onclick="pagarFaturaCartao()" style="background:rgba(255,82,82,0.15);border:1px solid rgba(255,82,82,0.4);border-radius:10px;padding:8px 14px;color:var(--red);font-family:Poppins,sans-serif;font-size:11px;font-weight:600;cursor:pointer;flex-shrink:0">Pagar fatura</button>
+      </div>
+    </div>
+  </div>
+  <!-- RESUMO DO MES -->
+  <div class="card" id="resumo-mes-card" style="margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="sec-title" style="margin:0">Resumo do mês</div>
+      <span id="resumo-mes-label" style="font-size:10px;color:var(--muted)"></span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:7px" id="resumo-mes-body">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 11px;background:var(--s3);border-radius:10px">
+        <span style="font-size:11px;color:var(--muted2)">📈 Receita prevista</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;color:var(--green)" id="rm-receita">R$ 0</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 11px;background:var(--s3);border-radius:10px">
+        <span style="font-size:11px;color:var(--muted2)">📉 Despesas previstas</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;color:var(--red)" id="rm-despesas">R$ 0</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 11px;border-radius:10px;border:1px solid var(--border2)" id="rm-sobra-row">
+        <span style="font-size:11px;font-weight:600" id="rm-sobra-label">💰 Sobra prevista</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600" id="rm-sobra">R$ 0</span>
+      </div>
+      <div id="rm-meta-row" style="display:none;padding:10px 11px;border-radius:10px;background:rgba(255,215,64,0.08);border:1px solid rgba(255,215,64,0.25)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:11px;color:var(--gold);font-weight:600">🎯 Nova receita necessária</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--gold)" id="rm-meta-val">R$ 0</span>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px" id="rm-meta-sub">para fechar o mês no zero</div>
       </div>
     </div>
   </div>
@@ -176,6 +204,18 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
       <button onclick="abrirReserva('retirada')" style="flex:1;padding:8px;border-radius:10px;border:none;background:rgba(255,82,82,0.12);color:var(--red);font-family:Poppins,sans-serif;font-size:11px;font-weight:600;cursor:pointer">- Retirar</button>
     </div>
   </div>
+  <!-- META DE FATURAMENTO -->
+  <div class="card" id="meta-fat-card" style="margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="sec-title" style="margin:0">Meta de faturamento</div>
+      <button onclick="openModal('modal-meta-fat')" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 2px">&#9998;</button>
+    </div>
+    <div id="meta-fat-body">
+      <div style="text-align:center;padding:10px 0">
+        <button onclick="openModal('modal-meta-fat')" style="background:var(--s3);border:1px dashed var(--border2);border-radius:10px;padding:10px 20px;color:var(--muted2);font-family:Poppins,sans-serif;font-size:11px;cursor:pointer">+ Definir meta do mês</button>
+      </div>
+    </div>
+  </div>
   <div class="card">
     <div class="sec-title">Despesas por categoria <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted)">(toque para detalhar)</span></div>
     <div class="chart-wrap"><canvas id="pizza-chart"></canvas></div>
@@ -193,6 +233,16 @@ body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;fon
     </div>
   </div>
 </div>
+<!-- MODAL META FATURAMENTO -->
+<div class="overlay" id="modal-meta-fat"><div class="modal">
+  <div class="mhandle"></div>
+  <div class="mtitle">Meta de faturamento</div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:14px" id="modal-meta-fat-sub">Define quanto você quer faturar neste mês</div>
+  <div class="field"><label>Meta (R$)</label><input type="number" id="meta-fat-inp" placeholder="Ex: 12000" step="100"></div>
+  <button class="sbtn" onclick="salvarMetaFat()">Salvar meta</button>
+  <button class="secbtn" id="meta-fat-remover" onclick="removerMetaFat()" style="display:none;color:var(--red);border-color:rgba(255,82,82,0.3)">Remover meta</button>
+  <button class="secbtn" onclick="closeModal('modal-meta-fat')">Cancelar</button>
+</div></div>
 <!-- CLIENTES -->
 <div class="page" id="pg-clientes">
   <div class="card" style="margin-bottom:10px">
@@ -1159,7 +1209,47 @@ function render(){
   // CAIXA: custosCaixaTotais (exclui cartao pendente; fatura fica separada)
   var entradasCaixa=pagamentos.filter(function(p){return inRangePag(p)&&!p.pontual;}).reduce(function(s,p){return s+p.valor;},0)+
     entradas.filter(function(a){var d=a.dataRecebimento||a.data;return inRange(d);}).reduce(function(s,a){return s+a.valor;},0);
-  var saldoCaixa=entradasCaixa-custosCaixaTotais-investidoPeriodo;
+  // Saldo acumulado: calcula tudo antes do inicio do periodo filtrado
+  var r=getFiltroRange();
+  var antesDeStr=r.de.toISOString().split('T')[0];
+  var saldoAnterior=(function(){
+    var eAnt=pagamentos.filter(function(p){
+      if(p.pontual)return false;
+      var d=new Date(p.ano,p.mes,1);return d<r.de;
+    }).reduce(function(s,p){return s+p.valor;},0)+
+    entradas.filter(function(a){
+      var d=new Date((a.dataRecebimento||a.data)+'T00:00:00');return d<r.de;
+    }).reduce(function(s,a){return s+a.valor;},0);
+    var cAnt=0;
+    custos.filter(function(c){return c.tipo==='avulso';}).forEach(function(c){
+      if(!c.data||c.data>=antesDeStr)return;
+      var forma=c.forma||'outro';var sp=c.statusPagto||(forma==='cartao'?'pendente':'pago');
+      if(forma==='cartao'&&sp==='pendente')return;
+      cAnt+=c.valor;
+    });
+    custos.filter(function(c){return c.tipo!=='avulso';}).forEach(function(c){
+      if(!c.data)return;
+      var partes=c.data.split('-');
+      var inicioMes=new Date(parseInt(partes[0]),parseInt(partes[1])-1,1);
+      var cur=new Date(inicioMes.getFullYear(),inicioMes.getMonth(),1);
+      while(cur<r.de){
+        var mesKey=c.id+'_'+cur.getMonth()+'_'+cur.getFullYear();
+        var ov=overrides.filter(function(x){return x.key===mesKey;})[0];
+        var valorMes=ov?ov.valor:c.valor;
+        var diaRef=c.data?new Date(c.data+'T00:00:00').getDate():5;
+        var dataRef=ov&&ov.data?ov.data:cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(diaRef).padStart(2,'0');
+        if(dataRef<antesDeStr){
+          var forma=c.forma||'outro';var sp=c.statusPagto||(forma==='cartao'?'pendente':'pago');
+          if(!(forma==='cartao'&&sp==='pendente'))cAnt+=valorMes;
+        }
+        cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);
+      }
+    });
+    var invAnt=ls('meta_movs').filter(function(m){return m.tipo==='aporte'&&m.data<antesDeStr;}).reduce(function(s,m){return s+m.valor;},0)+
+      ls('reserva_movs').filter(function(m){return m.tipo==='aporte'&&m.data<antesDeStr;}).reduce(function(s,m){return s+m.valor;},0);
+    return eAnt-cAnt-invAnt;
+  })();
+  var saldoCaixa=saldoAnterior+entradasCaixa-custosCaixaTotais-investidoPeriodo;
   var hoje=new Date();
   var naoRecebido=entradas.filter(function(a){
     if(!a.pontual)return false;
@@ -1168,6 +1258,13 @@ function render(){
     return inRange(dVenda)&&dReceb&&dReceb>hoje;
   }).reduce(function(s,a){return s+a.valor;},0);
   document.getElementById('kpi-saldo').textContent=fmt(saldoCaixa);
+  var subSaldo=document.getElementById('kpi-saldo-sub');
+  if(subSaldo){
+    if(Math.abs(saldoAnterior)>=1){
+      subSaldo.textContent=(saldoAnterior>=0?'+ acum. anterior '+fmt(saldoAnterior):'acum. anterior '+fmt(saldoAnterior));
+      subSaldo.style.color=saldoAnterior>=0?'var(--green)':'var(--red)';
+    } else { subSaldo.textContent=''; }
+  }
   document.getElementById('kpi-investido').textContent=fmt(investidoPeriodo);
   document.getElementById('kpi-nao-recebido').textContent=fmt(naoRecebido);
   // FATURA CARTAO
@@ -1189,6 +1286,134 @@ function render(){
   renderMetas();
   renderReservaCard();
   renderCatsList();renderCatsClienteList();renderMetasConfig();
+  renderResumoMes();
+  renderMetaFat();
+}
+
+function renderMetaFat(){
+  var r=getFiltroRange();
+  var chave='meta_fat_'+r.de.getFullYear()+'_'+r.de.getMonth();
+  var meta=parseFloat(localStorage.getItem(chave)||'0');
+  var el=document.getElementById('meta-fat-body');if(!el)return;
+  // atualiza modal sub
+  var subEl=document.getElementById('modal-meta-fat-sub');
+  if(subEl)subEl.textContent='Meta de '+MESES_FULL[r.de.getMonth()]+' '+r.de.getFullYear();
+  var remBtn=document.getElementById('meta-fat-remover');
+  if(remBtn)remBtn.style.display=meta>0?'block':'none';
+  var inp=document.getElementById('meta-fat-inp');
+  if(inp)inp.value=meta>0?meta:'';
+  if(meta<=0){
+    el.innerHTML='<div style="text-align:center;padding:10px 0"><button onclick="openModal(\'modal-meta-fat\')" style="background:var(--s3);border:1px dashed var(--border2);border-radius:10px;padding:10px 20px;color:var(--muted2);font-family:Poppins,sans-serif;font-size:11px;cursor:pointer">+ Definir meta do mês</button></div>';
+    return;
+  }
+  // calcula faturamento atual do periodo
+  var pagamentos=ls('pagamentos');var entradas=ls('entradas');
+  var mrrR=pagamentos.filter(function(p){return inRangePag(p)&&!p.pontual;}).reduce(function(s,p){return s+p.valor;},0);
+  var pontual=entradas.filter(function(a){
+    if(a.tipo==='reembolso')return false;
+    return inRange(a.dataVenda||a.data);
+  }).reduce(function(s,a){return s+a.valor;},0);
+  var fat=mrrR+pontual;
+  var pct=Math.min(100,Math.round(fat/meta*100));
+  var falta=Math.max(0,meta-fat);
+  var cor=pct>=100?'var(--green)':pct>=70?'var(--gold)':'var(--red)';
+  var emoji=pct>=100?'🎉':pct>=70?'📈':'📉';
+  el.innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">'+
+      '<span style="font-family:JetBrains Mono,monospace;font-size:20px;font-weight:600;color:'+cor+'">'+fmt(fat)+'</span>'+
+      '<span style="font-size:11px;color:var(--muted)">meta '+fmt(meta)+'</span>'+
+    '</div>'+
+    '<div style="height:10px;border-radius:99px;background:var(--s3);overflow:hidden;margin-bottom:6px">'+
+      '<div style="height:100%;border-radius:99px;background:'+cor+';width:'+pct+'%;transition:width .5s"></div>'+
+    '</div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center">'+
+      '<span style="font-size:11px;color:'+cor+';font-weight:600">'+emoji+' '+pct+'% atingido</span>'+
+      (falta>0?'<span style="font-size:10px;color:var(--muted)">faltam '+fmt(falta)+'</span>':'<span style="font-size:10px;color:var(--green)">Meta batida! ✓</span>')+
+    '</div>';
+}
+function salvarMetaFat(){
+  var r=getFiltroRange();
+  var chave='meta_fat_'+r.de.getFullYear()+'_'+r.de.getMonth();
+  var val=parseFloat(document.getElementById('meta-fat-inp').value||'0');
+  if(val>0)localStorage.setItem(chave,val);
+  closeModal('modal-meta-fat');
+  renderMetaFat();
+}
+function removerMetaFat(){
+  if(!confirm('Remover meta deste mês?'))return;
+  var r=getFiltroRange();
+  var chave='meta_fat_'+r.de.getFullYear()+'_'+r.de.getMonth();
+  localStorage.removeItem(chave);
+  closeModal('modal-meta-fat');
+  renderMetaFat();
+}
+function renderResumoMes(){
+  var el=document.getElementById('resumo-mes-card');if(!el)return;
+  var r=getFiltroRange();
+  var mesLabel=MESES[r.de.getMonth()]+' '+r.de.getFullYear();
+  var labelEl=document.getElementById('resumo-mes-label');if(labelEl)labelEl.textContent=mesLabel;
+  var clientes=ls('clientes');var custos=ls('custos');var entradas=ls('entradas');var pagamentos=ls('pagamentos');
+  var overrides=ls('custos_overrides');
+  var hoje=new Date();var hojeStr=hoje.toISOString().split('T')[0];
+  // Receita prevista = MRR dos recorrentes ativos + pontuais já lançadas no periodo
+  var mrrPrevisto=clientes.filter(function(c){return !c.encerrado&&(c.tipo||'recorrente')==='recorrente';}).reduce(function(s,c){return s+(c.valor||0);},0);
+  var pontualPrevisto=entradas.filter(function(a){
+    if(a.tipo==='reembolso')return false;
+    var d=new Date((a.dataVenda||a.data)+'T00:00:00');
+    return d.getMonth()===r.de.getMonth()&&d.getFullYear()===r.de.getFullYear();
+  }).reduce(function(s,a){return s+a.valor;},0);
+  var receitaPrevista=mrrPrevisto+pontualPrevisto;
+  // Despesas previstas = todos os custos do mes (mesmo os que ainda nao venceram)
+  var despesasPrevistas=0;
+  var mesRef=new Date(r.de.getFullYear(),r.de.getMonth(),1);
+  custos.forEach(function(c){
+    if(!c.data)return;
+    var forma=c.forma||'outro';var sp=c.statusPagto||(forma==='cartao'?'pendente':'pago');
+    if(forma==='cartao'&&sp==='pendente')return; // exclui fatura pendente
+    if(c.tipo==='avulso'){
+      var d=new Date(c.data+'T00:00:00');
+      if(d.getMonth()===r.de.getMonth()&&d.getFullYear()===r.de.getFullYear())despesasPrevistas+=c.valor;
+    } else if(c.tipo==='parcelado'){
+      var np=c.parcelas||1;var ps=c.data.split('-');
+      var ini=new Date(parseInt(ps[0]),parseInt(ps[1])-1,1);
+      for(var p=0;p<np;p++){
+        var mp=new Date(ini.getFullYear(),ini.getMonth()+p,1);
+        if(mp.getMonth()===r.de.getMonth()&&mp.getFullYear()===r.de.getFullYear()){despesasPrevistas+=c.valor;break;}
+      }
+    } else { // fixo
+      var ps2=c.data.split('-');var ini2=new Date(parseInt(ps2[0]),parseInt(ps2[1])-1,1);
+      if(mesRef>=ini2){
+        var mk=c.id+'_'+r.de.getMonth()+'_'+r.de.getFullYear();
+        var ov=overrides.filter(function(x){return x.key===mk;})[0];
+        despesasPrevistas+=ov?ov.valor:c.valor;
+      }
+    }
+  });
+  var sobra=receitaPrevista-despesasPrevistas;
+  // Exibe
+  document.getElementById('rm-receita').textContent=fmt(receitaPrevista);
+  document.getElementById('rm-despesas').textContent=fmt(despesasPrevistas);
+  document.getElementById('rm-sobra').textContent=fmt(sobra);
+  var sobraRow=document.getElementById('rm-sobra-row');
+  var sobraLabel=document.getElementById('rm-sobra-label');
+  if(sobra>=0){
+    sobraRow.style.background='rgba(0,230,118,0.07)';sobraRow.style.borderColor='rgba(0,230,118,0.25)';
+    document.getElementById('rm-sobra').style.color='var(--green)';
+    if(sobraLabel)sobraLabel.style.color='var(--green)';
+    if(sobraLabel)sobraLabel.textContent='💰 Sobra prevista';
+    document.getElementById('rm-meta-row').style.display='none';
+  } else {
+    sobraRow.style.background='rgba(255,82,82,0.07)';sobraRow.style.borderColor='rgba(255,82,82,0.3)';
+    document.getElementById('rm-sobra').style.color='var(--red)';
+    if(sobraLabel)sobraLabel.style.color='var(--red)';
+    if(sobraLabel)sobraLabel.textContent='⚠️ Déficit previsto';
+    var metaRow=document.getElementById('rm-meta-row');
+    var metaNecessaria=Math.abs(sobra);
+    document.getElementById('rm-meta-val').textContent=fmt(metaNecessaria);
+    var subEl=document.getElementById('rm-meta-sub');
+    if(subEl)subEl.textContent='para fechar o mês no zero';
+    metaRow.style.display='block';
+  }
 }
 
 function excluirCustoAvulso(id){
@@ -1228,6 +1453,8 @@ function renderAnalise(deStr,ateStr){
   while(cur<=ate){meses.push({m:cur.getMonth(),y:cur.getFullYear()});cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);}
   if(!meses.length)return;
   var pagamentos=ls('pagamentos');var entradas=ls('entradas');var custos=ls('custos');
+  var overrides=ls('custos_overrides');
+  var hojeStr=new Date().toISOString().split('T')[0];
   var labels=meses.map(function(x){return MESES[x.m]+(meses.length>6?'/'+String(x.y).slice(2):'');});
   var dataMRR=meses.map(function(x){return pagamentos.filter(function(p){return p.mes===x.m&&p.ano===x.y&&!p.pontual;}).reduce(function(s,p){return s+p.valor;},0);});
   var dataPontual=meses.map(function(x){return entradas.filter(function(a){
@@ -1236,29 +1463,58 @@ function renderAnalise(deStr,ateStr){
     var d=new Date(dataRef+'T00:00:00');
     return d.getMonth()===x.m&&d.getFullYear()===x.y;
   }).reduce(function(s,a){return s+a.valor;},0);});
-  var dataFixo=meses.map(function(x){
+  // FIX: custos corretos por mes — inclui avulsos, parcelados, e respeita overrides e data<=hoje
+  var dataCustos=meses.map(function(x){
+    var mesRef=new Date(x.y,x.m,1);
     var total=0;
-    custos.filter(function(c){return c.natureza!=='variavel'&&c.tipo!=='avulso';}).forEach(function(c){
-      var parts=c.data?c.data.split('-'):[0,1];
-      var ini=new Date(parseInt(parts[0]),parseInt(parts[1])-1,1);
-      if(new Date(x.y,x.m,1)>=ini)total+=c.valor;
-    });return total;
+    custos.forEach(function(c){
+      if(!c.data)return;
+      var forma=c.forma||'outro';
+      var sp=c.statusPagto||(forma==='cartao'?'pendente':'pago');
+      // cartao pendente nao entra no fluxo de custos (vai pra fatura)
+      if(forma==='cartao'&&sp==='pendente')return;
+      if(c.tipo==='avulso'){
+        // avulso: so no mes exato e se data<=hoje
+        var d=new Date(c.data+'T00:00:00');
+        if(d.getMonth()===x.m&&d.getFullYear()===x.y&&c.data<=hojeStr)total+=c.valor;
+      } else if(c.tipo==='parcelado'){
+        // parcelado: n parcelas a partir da data de inicio
+        var np=c.parcelas||1;
+        var parts=c.data.split('-');
+        var ini=new Date(parseInt(parts[0]),parseInt(parts[1])-1,1);
+        for(var p=0;p<np;p++){
+          var mesP=new Date(ini.getFullYear(),ini.getMonth()+p,1);
+          if(mesP.getMonth()===x.m&&mesP.getFullYear()===x.y){
+            var dataP=mesP.getFullYear()+'-'+String(mesP.getMonth()+1).padStart(2,'0')+'-'+String(new Date(c.data+'T00:00:00').getDate()).padStart(2,'0');
+            if(dataP<=hojeStr)total+=c.valor;
+            break;
+          }
+        }
+      } else {
+        // fixo: a partir do mes de inicio, com override de valor
+        var parts2=c.data.split('-');
+        var ini2=new Date(parseInt(parts2[0]),parseInt(parts2[1])-1,1);
+        if(mesRef>=ini2){
+          var mesKey=c.id+'_'+x.m+'_'+x.y;
+          var ov=overrides.filter(function(o){return o.key===mesKey;})[0];
+          var valorMes=ov?ov.valor:c.valor;
+          // data de referencia para checar se ja passou
+          var diaRef=new Date(c.data+'T00:00:00').getDate();
+          var dataRef2=ov&&ov.data?ov.data:x.y+'-'+String(x.m+1).padStart(2,'0')+'-'+String(diaRef).padStart(2,'0');
+          if(dataRef2<=hojeStr)total+=valorMes;
+        }
+      }
+    });
+    return total;
   });
-  var dataVar=meses.map(function(x){
-    var total=0;
-    custos.filter(function(c){return c.natureza==='variavel';}).forEach(function(c){
-      var parts=c.data?c.data.split('-'):[0,1];
-      var ini=new Date(parseInt(parts[0]),parseInt(parts[1])-1,1);
-      if(new Date(x.y,x.m,1)>=ini)total+=c.valor;
-    });return total;
-  });
-  var dataMargem=meses.map(function(_,i){return (dataMRR[i]+dataPontual[i])-(dataFixo[i]+dataVar[i]);});
+  var dataMargem=meses.map(function(_,i){return (dataMRR[i]+dataPontual[i])-dataCustos[i];});
+  var dataMargPct=meses.map(function(_,i){var fat=dataMRR[i]+dataPontual[i];return fat>0?parseFloat(((fat-dataCustos[i])/fat*100).toFixed(1)):0;});
   Object.keys(anCharts).forEach(function(k){try{anCharts[k].destroy();}catch(e){}});anCharts={};
   var tO={color:'rgba(240,239,233,0.35)',font:{size:10,family:'Poppins'}};var gO={color:'rgba(240,239,233,0.04)'};
   var fK=function(v){return 'R$'+Math.round(v/1000)+'k';};
   var c1=document.getElementById('an-faturamento');if(c1)anCharts.fat=new Chart(c1,{type:'bar',data:{labels:labels,datasets:[{label:'MRR',data:dataMRR,backgroundColor:'rgba(0,230,118,0.75)',borderRadius:4,stack:'f'},{label:'Pontual',data:dataPontual,backgroundColor:'rgba(64,196,255,0.75)',borderRadius:4,stack:'f'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},scales:{x:{ticks:tO,grid:{display:false},stacked:true},y:{ticks:{color:tO.color,font:tO.font,callback:fK},grid:gO,stacked:true}}}});
-  var c2=document.getElementById('an-custos');if(c2)anCharts.cus=new Chart(c2,{type:'bar',data:{labels:labels,datasets:[{label:'Fixo',data:dataFixo,backgroundColor:'rgba(0,146,92,0.8)',borderRadius:4,stack:'c'},{label:'Variavel',data:dataVar,backgroundColor:'rgba(255,82,82,0.75)',borderRadius:4,stack:'c'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},scales:{x:{ticks:tO,grid:{display:false},stacked:true},y:{ticks:{color:tO.color,font:tO.font,callback:fK},grid:gO,stacked:true}}}});
-  var c3=document.getElementById('an-margem');if(c3)anCharts.mar=new Chart(c3,{type:'line',data:{labels:labels,datasets:[{label:'Margem',data:dataMargem,borderColor:'#00E676',backgroundColor:'rgba(0,230,118,0.07)',tension:0.35,fill:true,pointRadius:4,pointBackgroundColor:dataMargem.map(function(v){return v>=0?'#00E676':'#ff5252';})}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:tO,grid:{display:false}},y:{ticks:{color:tO.color,font:tO.font,callback:fK},grid:gO}}}});
+  var c2=document.getElementById('an-custos');if(c2)anCharts.cus=new Chart(c2,{type:'bar',data:{labels:labels,datasets:[{label:'Custos',data:dataCustos,backgroundColor:'rgba(255,82,82,0.75)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return 'R$'+ctx.parsed.y.toLocaleString('pt-BR',{minimumFractionDigits:0});}}}},scales:{x:{ticks:tO,grid:{display:false}},y:{ticks:{color:tO.color,font:tO.font,callback:fK},grid:gO}}}});
+  var c3=document.getElementById('an-margem');if(c3)anCharts.mar=new Chart(c3,{type:'line',data:{labels:labels,datasets:[{label:'Margem R$',data:dataMargem,borderColor:'#00E676',backgroundColor:'rgba(0,230,118,0.07)',tension:0.35,fill:true,pointRadius:4,pointBackgroundColor:dataMargem.map(function(v){return v>=0?'#00E676':'#ff5252';})},{label:'Margem %',data:dataMargPct,borderColor:'rgba(64,196,255,0.7)',backgroundColor:'transparent',tension:0.35,pointRadius:3,borderDash:[4,4],yAxisID:'y2'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return ctx.dataset.label===('Margem %')?ctx.parsed.y.toFixed(1)+'%':'R$'+ctx.parsed.y.toLocaleString('pt-BR',{minimumFractionDigits:0});}}}},scales:{x:{ticks:tO,grid:{display:false}},y:{ticks:{color:tO.color,font:tO.font,callback:fK},grid:gO},y2:{position:'right',ticks:{color:'rgba(64,196,255,0.6)',font:{size:9,family:'Poppins'},callback:function(v){return v+'%';}},grid:{display:false}}}}});
 }
 function setPeriodoAnalise(n,btn){
   document.querySelectorAll('.per-btn').forEach(function(b){b.style.background='transparent';b.style.color='rgba(240,239,233,0.7)';b.style.borderColor='rgba(0,230,118,0.08)';});
